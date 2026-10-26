@@ -1,0 +1,5 @@
+{
+  "rewrites": [
+    { "source": "/", "destination": "/AA%20Logistik%20Operations.dc.html" }
+  ]
+}
