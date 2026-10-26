@@ -13,13 +13,8 @@
   if (!window.MASTER_EMAIL_TEMPLATES) {
     window.MASTER_EMAIL_TEMPLATES = [
       { id: 'tpl-ack', name: 'Case Acknowledgement', subject: 'We have received your request — {{caseId}}', body: 'Hello {{contactName}},\n\nThank you for contacting AA Logistik. We have received your request and opened case {{caseId}}. We will get back to you as soon as possible.\n\nBest regards,\nAA Logistik' },
-      { id: 'tpl-booking', name: 'Booking Confirmed', subject: 'Booking confirmed — {{caseId}}', body: 'Hello {{contactName}},\n\nYour transport booking under case {{caseId}} has been confirmed. Pickup: {{pickupDate}}. Delivery: {{deliveryDate}}.\n\nBest regards,\nAA Logistik' },
       { id: 'tpl-missing-info', name: 'Missing Information Request', subject: 'We need more information — {{caseId}}', body: 'Hello {{contactName}},\n\nTo proceed with case {{caseId}}, we still need the following information: {{missingFields}}. Please reply with these details at your earliest convenience.\n\nBest regards,\nAA Logistik' },
       { id: 'tpl-status', name: 'Status Update', subject: 'Status update — {{caseId}}', body: 'Hello {{contactName}},\n\nHere is the current status of case {{caseId}}: {{statusSummary}}.\n\nBest regards,\nAA Logistik' },
-      { id: 'tpl-issue', name: 'Issue Acknowledgement', subject: 'We are looking into this — {{caseId}}', body: 'Hello {{contactName}},\n\nWe have registered the issue you reported under case {{caseId}} and are investigating. We will update you as soon as we know more.\n\nBest regards,\nAA Logistik' },
-      { id: 'tpl-doc', name: 'Document Request', subject: 'Document needed — {{caseId}}', body: 'Hello {{contactName}},\n\nCould you please send us {{documentName}} so we can proceed with case {{caseId}}?\n\nBest regards,\nAA Logistik' },
-      { id: 'tpl-quote', name: 'Quote Sent', subject: 'Your quote — {{caseId}}', body: 'Hello {{contactName}},\n\nPlease find our quote for your inquiry under case {{caseId}} attached. The quote is valid for 14 days.\n\nBest regards,\nAA Logistik' },
-      { id: 'tpl-cancel', name: 'Cancellation Confirmed', subject: 'Cancellation confirmed — {{caseId}}', body: 'Hello {{contactName}},\n\nWe confirm that case {{caseId}} has been cancelled as requested.\n\nBest regards,\nAA Logistik' },
     ];
   }
 
