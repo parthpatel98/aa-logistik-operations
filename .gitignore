@@ -1,0 +1,26 @@
+# Old snapshots, archives and test scripts (not used by the running app)
+_archive/
+archive/
+backups/
+tmp/
+docs/
+
+# Source material and generated uploads
+uploads/
+screenshots/
+*.zip
+out19.txt
+/review_*.png
+
+# Design system: only the font stylesheet is loaded by the app
+_ds/*
+!_ds/aa-logistik-design-system-1684d5c1-7e4a-4cbc-b5cb-2c44599f8daf/
+_ds/aa-logistik-design-system-1684d5c1-7e4a-4cbc-b5cb-2c44599f8daf/*
+!_ds/aa-logistik-design-system-1684d5c1-7e4a-4cbc-b5cb-2c44599f8daf/tokens/
+_ds/aa-logistik-design-system-1684d5c1-7e4a-4cbc-b5cb-2c44599f8daf/tokens/*
+!_ds/aa-logistik-design-system-1684d5c1-7e4a-4cbc-b5cb-2c44599f8daf/tokens/fonts.css
+
+# Editor and OS files
+.vscode/
+Thumbs.db
+desktop.ini
