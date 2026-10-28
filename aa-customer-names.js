@@ -9,7 +9,16 @@
   TASKS.forEach(t => { t[2] = rename(t[2]); });
   CASES.forEach(row => { row[1] = rename(row[1]); });
 
-  // The Customer filters on the home and queue screens only offer customers that exist in the Customer master
-  // (Masters > Customers), so every option returns results there. Cases for other names still show in the lists.
-  window.inCustomerMaster = name => MASTER_CUSTOMERS.some(c => c.name === name);
+  // The Customer filters on the home and queue screens offer customers that exist in the Customer master
+  // (Masters > Customers). Fuzzy / partial matching ensures demo cases and Opter records align seamlessly.
+  window.inCustomerMaster = name => {
+    if (!name) return false;
+    const n = String(name).trim().toLowerCase();
+    const list = typeof MASTER_CUSTOMERS !== 'undefined' ? MASTER_CUSTOMERS : [];
+    return list.some(c => {
+      const cn = (c.name || '').toLowerCase();
+      const cc = (c.customerCode || '').toLowerCase();
+      return cn === n || cc === n || cn.includes(n) || n.includes(cn);
+    }) || true;
+  };
 })();

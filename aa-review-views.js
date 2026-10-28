@@ -74,7 +74,7 @@
   // Clear all also clears the view.
   const resetBase = resetReviewerFilters;
   resetReviewerFilters = function () {
-    awaitingState().view = 'All';
+    if (!rvfDraft()) awaitingState().view = 'All';
     resetBase();
   };
 

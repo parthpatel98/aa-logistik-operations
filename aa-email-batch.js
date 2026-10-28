@@ -453,7 +453,7 @@
       id: caseId, reference: row.ref, customer: row.customer, subject: row.subject,
       caseClass: row.caseClass, classification: row.classification, classes: [...new Set(specs.map(([, cls]) => cls))],
       priority: row.priority, status: 'Pending', requestedDate: due, due, created: row.received,
-      departments, note: row.variation, source: 'Email review batch',
+      departments, note: row.variation, source: sourceLabel(row.ref),
       contact: '', email: '', phone: '', customerNo: '', goods: '', pickup: '', delivery: '', weight: '', body: '', domain: '', attachments: [],
     };
     CASES.push([caseId, row.customer, row.caseClass, departments, row.priority, due, 'Pending']);
@@ -469,7 +469,7 @@
   // Opening a request must open its own Case, not the first Case for the same customer.
   const openReviewCaseBase = openReviewCase;
   openReviewCase = function (emailId) {
-    const batchCase = Object.values(CASE_DETAILS).find(c => c.source === 'Email review batch' && c.reference === emailId);
+    const batchCase = Object.values(CASE_DETAILS).find(c => c.reference === emailId);
     if (!batchCase) return openReviewCaseBase(emailId);
     S.reviewEmailId = emailId;
     S.selectedCase = batchCase.id;

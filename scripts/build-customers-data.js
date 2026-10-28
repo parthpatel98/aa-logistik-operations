@@ -1,66 +1,114 @@
-// One-off build script: turns uploads/contacts-source.json (contacts export)
-// and uploads/customers-master.json (customer master export, pre-converted
-// from the .xlsx with pandas since this script has no xlsx reader of its own)
-// into the MASTER_CUSTOMERS / MASTER_CONTACTS arrays consumed by aa-customers.js.
-// Run with: node scripts/build-customers-data.js
 const fs = require('fs');
 const path = require('path');
 
-const src = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'uploads', 'contacts-source.json'), 'utf8'));
-const rows = src.data;
-const masterRows = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'uploads', 'customers-master.json'), 'utf8'));
+const rootDir = path.join(__dirname, '..');
+const custPath = fs.existsSync(path.join(rootDir, 'Customer Info.json'))
+  ? path.join(rootDir, 'Customer Info.json')
+  : 'C:/Users/hb.DESKTOP-C0DHAUD/Downloads/Customer Info.json';
 
+const contactsPath = fs.existsSync(path.join(rootDir, 'Contacts.json'))
+  ? path.join(rootDir, 'Contacts.json')
+  : 'C:/Users/hb.DESKTOP-C0DHAUD/Downloads/COntacts.json';
+
+console.log('Reading customers from:', custPath);
+console.log('Reading contacts from:', contactsPath);
+
+const rawCust = JSON.parse(fs.readFileSync(custPath, 'utf8'));
+const rawContactsData = JSON.parse(fs.readFileSync(contactsPath, 'utf8'));
+const rawContacts = Array.isArray(rawContactsData) ? rawContactsData : (rawContactsData.data || []);
+
+console.log(`Loaded ${rawCust.length} customers and ${rawContacts.length} contacts.`);
+
+// Build index of customer IDs and Names
+const custIdSet = new Set(rawCust.map(c => String(c.id)));
+const custByName = new Map();
+rawCust.forEach(c => {
+  if (c.name) custByName.set(c.name.trim().toLowerCase(), String(c.id));
+});
+
+// Count contacts per customer
 const contactCounts = new Map();
-for (const r of rows) {
-  const id = String(r.CustomerID || '').trim();
-  if (!id) continue;
-  contactCounts.set(id, (contactCounts.get(id) || 0) + 1);
+const processedContacts = [];
+let contactSeq = 0;
+
+for (const r of rawContacts) {
+  const rawId = String(r.CustomerID || '').trim();
+  const cname = String(r.CompanyName || '').trim();
+  let matchedId = '';
+  let matchedName = 'Unassigned';
+
+  if (rawId && rawId !== '-1' && custIdSet.has(rawId)) {
+    matchedId = rawId;
+    const found = rawCust.find(c => String(c.id) === rawId);
+    matchedName = found ? found.name : cname;
+  } else if (cname && custByName.has(cname.toLowerCase())) {
+    matchedId = custByName.get(cname.toLowerCase());
+    const found = rawCust.find(c => String(c.id) === matchedId);
+    matchedName = found ? found.name : cname;
+  } else if (cname) {
+    matchedName = cname;
+  }
+
+  if (matchedId) {
+    contactCounts.set(matchedId, (contactCounts.get(matchedId) || 0) + 1);
+  }
+
+  const name = String(r.Name || '').trim();
+  if (name) {
+    processedContacts.push({
+      id: 'contact-' + (++contactSeq),
+      name,
+      email: String(r.Email || '').trim(),
+      phone: String(r.Cellphone || r.Phone || '').trim(),
+      customerId: matchedId,
+      customerName: matchedName,
+      info: String(r.Info || '').trim()
+    });
+  }
 }
 
-// --- Customers: the real customer master (ID matches CustomerID in the
-// contacts export — verified: every customer referenced by a contact has a
-// matching row here). Address is the street line plus zip/city when the
-// export carried them separately. ---
-const customers = masterRows
+// Build customer master rows
+const customers = rawCust
   .filter(r => r.id && r.name && r.name !== '0')
   .map(r => {
-    const tail = [r.zip, r.city].filter(Boolean).join(' ');
-    const address = [r.street, tail].filter(Boolean).join(', ');
+    // Construct address
+    const visitStreet = [r.streetVisit, r.streetNoVisit].filter(Boolean).join(' ');
+    const visitLoc = [r.zipCodeVisit, r.cityVisit].filter(Boolean).join(' ');
+    const visitAddr = [visitStreet, visitLoc].filter(Boolean).join(', ');
+
+    const invStreet = [r.streetInvoice, r.streetNoInvoice].filter(Boolean).join(' ');
+    const invLoc = [r.zipCodeInvoice, r.cityInvoice].filter(Boolean).join(' ');
+    const invAddr = [invStreet, invLoc].filter(Boolean).join(', ');
+
+    const address = visitAddr || invAddr || r.addressLine1Visit || r.companyVisit || '';
+    const city = r.cityVisit || r.cityInvoice || '';
+
     return {
-      id: r.id,
-      name: r.name,
-      email: r.email || '',
-      phone: r.phone || '',
+      id: String(r.id),
+      name: String(r.name).trim(),
+      customerCode: String(r.customerCode || '').trim(),
+      customerNumber: String(r.customerNumber || '').trim(),
+      email: String(r.emailAddress || r.emailAddressInvoice || '').trim(),
+      phone: String(r.phone1 || r.phone2 || '').trim(),
       address,
-      customerNumber: r.customerNumber || '',
-      orgNumber: r.orgNumber || '',
-      priceList: r.priceList || '',
-      contacts: contactCounts.get(r.id) || 0,
+      city,
+      orgNumber: String(r.organizationNumber || '').trim(),
+      vatNumber: String(r.vatNumber || '').trim(),
+      invoiceReference: String(r.invoiceReference || '').trim(),
+      dispatchInfo: String(r.dispatchInformation || '').trim(),
+      driverInfo: String(r.driverInformation || '').trim(),
+      priceList: 'Base',
+      active: r.active !== false,
+      contacts: contactCounts.get(String(r.id)) || 0
     };
   })
   .sort((a, b) => a.name.localeCompare(b.name, 'sv'));
 
-// --- Contacts: every row, linked back to its customer id. Each gets a
-// stable id so the Contacts master can add/edit/delete rows at runtime. ---
-const customerNameById = new Map(customers.map(c => [c.id, c.name]));
-let contactSeq = 0;
-const contacts = rows.map(r => {
-  const id = String(r.CustomerID || '').trim();
-  return {
-    id: 'contact-' + (++contactSeq),
-    name: String(r.Name || '').trim(),
-    email: String(r.Email || '').trim(),
-    phone: String(r.Cellphone || r.Phone || '').trim(),
-    customerId: id && id !== '-1' ? id : '',
-    customerName: id && id !== '-1' ? (customerNameById.get(id) || String(r.CompanyName || '').trim()) : 'Unassigned',
-    info: String(r.Info || '').trim(),
-  };
-}).filter(c => c.name);
-
-const out = `/* Generated by scripts/build-customers-data.js from uploads/contacts-source.json. Do not hand-edit — rerun the script instead. */
-const MASTER_CUSTOMERS = ${JSON.stringify(customers)};
-const MASTER_CONTACTS = ${JSON.stringify(contacts)};
+const out = `/* Generated from Customer Info.json and Contacts.json. Do not hand-edit — rerun scripts/build-customers-data.js instead. */
+const MASTER_CUSTOMERS = ${JSON.stringify(customers, null, 2)};
+const MASTER_CONTACTS = ${JSON.stringify(processedContacts, null, 2)};
 `;
 
-fs.writeFileSync(path.join(__dirname, '..', 'data-customers.js'), out);
-console.log(`Wrote ${customers.length} customers and ${contacts.length} contacts to data-customers.js`);
+const targetFile = path.join(rootDir, 'data-customers.js');
+fs.writeFileSync(targetFile, out, 'utf8');
+console.log(`Successfully generated ${targetFile}: ${customers.length} customers, ${processedContacts.length} contacts.`);

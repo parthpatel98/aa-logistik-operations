@@ -28,13 +28,25 @@ const S = { notifRead: {}, userId: 'john', role: 'Admin', page: 'home', taskScop
             { id: 'jonas', name: 'Jonas Eriksson', role: 'User', department: 'Transport', title: 'Transport Planner', initials: 'JE' },
             { id: 'sara', name: 'Sara Nyberg', role: 'User', department: 'Transport', title: 'Transport Coordinator', initials: 'SN' },
             { id: 'mikael', name: 'Mikael Dahl', role: 'User', department: 'Packing', title: 'Packing Specialist', initials: 'MD' },
-            { id: 'anders', name: 'Anders Lindqvist', role: 'User', department: 'Freight forwarding', title: 'Freight Coordinator', initials: 'AL' }
+            { id: 'anders', name: 'Anders Lindqvist', role: 'User', department: 'Freight forwarding', title: 'Freight Coordinator', initials: 'AL' },
+            { id: 'henrik', name: 'Henrik Åberg', role: 'Manager', department: 'Warehouse', title: 'Warehouse Manager', initials: 'HÅ' },
+            { id: 'linnea', name: 'Linnea Strand', role: 'User', department: 'Warehouse', title: 'Warehouse Operator', initials: 'LS' },
+            { id: 'viktor', name: 'Viktor Ek', role: 'User', department: 'Warehouse', title: 'Warehouse Operator', initials: 'VE' },
+            { id: 'ida', name: 'Ida Forsberg', role: 'Manager', department: 'Inbound/Outbound', title: 'Inbound/Outbound Manager', initials: 'IF' },
+            { id: 'pontus', name: 'Pontus Hedlund', role: 'User', department: 'Inbound/Outbound', title: 'Goods Receiving Coordinator', initials: 'PH' },
+            { id: 'julia', name: 'Julia Roos', role: 'User', department: 'Inbound/Outbound', title: 'Dispatch Coordinator', initials: 'JR' },
+            { id: 'gustav', name: 'Gustav Wallin', role: 'Manager', department: 'Finance', title: 'Finance Manager', initials: 'GW' },
+            { id: 'hanna', name: 'Hanna Öberg', role: 'User', department: 'Finance', title: 'Billing Specialist', initials: 'HÖ' },
+            { id: 'nils', name: 'Nils Sandberg', role: 'User', department: 'Finance', title: 'Billing Specialist', initials: 'NS' },
+            { id: 'camilla', name: 'Camilla Boman', role: 'Manager', department: 'Sales', title: 'Sales Manager', initials: 'CB' },
+            { id: 'fredrik', name: 'Fredrik Lund', role: 'User', department: 'Sales', title: 'Sales Coordinator', initials: 'FL' },
+            { id: 'ebba', name: 'Ebba Torp', role: 'User', department: 'Sales', title: 'Sales Representative', initials: 'ET' }
         ];
         const REQUESTS = [{ id: 'REQ-101', taskId: 'TASK-2032', requesterId: 'erik', requestedAt: '09/10/2026, 09:12', status: 'Pending Approval' }];
         const PERMISSION_META = { viewCompanyTasks: ['View company Tasks', 'Can browse Tasks across every department'], requestAssignments: ['Request assignments', 'Can request unassigned Tasks in their department'], updateTasks: ['Update Task status', 'Can start and complete assigned Tasks'], viewDashboard: ['View Dashboard', 'Can access analytics for their role'], sendAcknowledgements: ['Send acknowledgements', 'Can send customer acknowledgement messages'], approveRequests: ['Approve requests', 'Can approve or decline department assignment requests'] };
         const PERMISSIONS = Object.fromEntries(USERS.map(u => [u.id, { viewCompanyTasks: true, requestAssignments: u.role === 'User', updateTasks: true, viewDashboard: true, sendAcknowledgements: true, assignTasks: false, approveRequests: u.role === 'Manager' }]));
         const AI_DATA = { customer: 'ABB Robotics', classification: 'Transport Order', caseClass: 'New Booking', priority: 'High', pickup: 'Västerås, Sweden', delivery: 'Munich, Germany', requestedDate: '15/10/2026', goods: '2 industrial robots', weight: '4,200 kg total' };
-        const TASK_ROUTING = { 'Transport booking': 'andreas', 'Pickup coordination': 'erik', 'Transport follow-up': 'maria', 'Delivery coordination': 'andreas', 'Packing preparation': 'karin', 'Packing inspection': 'oskar', 'Export documentation': 'emma', 'Customs clearance': 'elin', 'Freight coordination': 'lars', 'Warehouse storage': 'sofia' };
+        const TASK_ROUTING = { 'Transport booking': 'andreas', 'Pickup coordination': 'erik', 'Transport follow-up': 'fredrik', 'Delivery coordination': 'pontus', 'Packing preparation': 'karin', 'Packing inspection': 'oskar', 'Export documentation': 'hanna', 'Customs clearance': 'elin', 'Freight coordination': 'lars', 'Warehouse storage': 'linnea' };
         const USER_MASTER = USERS.map(u => ({ ...u, workScope: u.role === 'Admin' ? 'Company' : u.role === 'Manager' ? 'My department' : 'Me', classifications: Object.entries(TASK_ROUTING).filter(([, id]) => id === u.id).map(([name]) => name) }));
         const PROPOSED_TASKS = [{ title: 'Arrange transport', department: 'Transport', classification: 'Transport booking', due: '15/10/2026' }, { title: 'Pack equipment', department: 'Packing', classification: 'Packing preparation', due: '13/10/2026' }, { title: 'Prepare customs clearance', department: 'Freight forwarding', classification: 'Customs clearance', due: '14/10/2026' }];
         const CASES = [['CASE-401046', 'ABB Robotics', 'Transport order', 'Transport, Packing', 'High', '07/10/2026', 'Active'], ['CASE-401045', 'Hitachi Energy', 'Export shipment', 'Transport, Freight', 'Medium', '07/10/2026', 'In Progress'], ['CASE-401043', 'Alstom', 'Pickup coordination', 'Transport', 'Medium', '08/10/2026', 'Ready'], ['CASE-401041', 'Westinghouse Electric', 'Customs clearance', 'Freight', 'High', '08/10/2026', 'Waiting'], ['CASE-401039', 'Nefab', 'Vehicle booking', 'Transport', 'Low', '09/10/2026', 'Blocked']];
@@ -101,8 +113,8 @@ const S = { notifRead: {}, userId: 'john', role: 'Admin', page: 'home', taskScop
         function sendAck() { if (!can('sendAcknowledgements')) { toast('Your profile does not have permission to send acknowledgements'); return } if (S.ack) { toast('Acknowledgement already sent'); return } S.ack = true; S.ackBy = actorName(); S.ackAt = '09/10/2026, 12:34'; S.activities.unshift(['Customer acknowledgement sent', S.ackBy, S.ackAt]); render(); toast('Acknowledgement sent and locked for all roles') }
         function values(index, base = TASKS) { return [...new Set(base.map(x => x[index]))].sort() }
         const SOURCE_BOXES=['transport@aalogistik.se','terminal@aalogistik.se'];
-function sourceOf(id){const m={'EML-4101':0,'EML-4102':1,'EML-4103':'Customer portal','EML-4104':0,'EML-4105':'Customer portal','EML-4106':1,'EML-4107':'Customer portal','EML-4108':0,'EML-4109':1,'EML-4110':'Customer portal'};let v=m[id];if(v===undefined){let h=0;String(id).split('').forEach(ch=>h=(h*31+ch.charCodeAt(0))%97);v=h%5===0?'Customer portal':h%2}return typeof v==='number'?{type:'Email',box:SOURCE_BOXES[v]}:{type:v,box:''}}
-const SOURCE_FILTERS=['Terminal','Transport','Customer portal'];
+function sourceOf(id){const m={'EML-4101':0,'EML-4102':1,'EML-4103':0,'EML-4104':0,'EML-4105':1,'EML-4106':1,'EML-4107':0,'EML-4108':0,'EML-4109':1,'EML-4110':1};let v=m[id];if(v===undefined){let h=0;String(id).split('').forEach(ch=>h=(h*31+ch.charCodeAt(0))%97);v=h%2}return {type:'Email',box:SOURCE_BOXES[v]}}
+const SOURCE_FILTERS=['Terminal','Transport'];
 function sourceLabel(id){const s=sourceOf(id);return s.box?s.box.split('@')[0].replace(/^./,x=>x.toUpperCase()):s.type}
 function sourceCell(id){const s=sourceOf(id),ic=s.type==='Email'?'✉':'◫';return `<span class="src-chip"${s.box?` data-tip="Received in ${s.box}" tabindex="0"`:''}><span class="src-ic">${ic}</span>${s.box?s.box.split('@')[0].replace(/^./,x=>x.toUpperCase()):s.type}</span>`}
 function optionList(vals, current, label) { return `<option value="All">${label}</option>${vals.map(v => `<option ${current === v ? 'selected' : ''}>${v}</option>`).join('')}` }
@@ -450,6 +462,8 @@ function effectiveTaskStatus(t) { return normalizeTaskStatus(t[7]) }
         function regenerateAiSummary(caseId) { S.aiSummaryGenerated = S.aiSummaryGenerated || {}; S.aiSummaryGenerated[caseId] = summaryStamp(); render(); toast('AI summary regenerated') }
         function caseOverviewV2() { let c = selectedCaseData(), tasks = selectedCaseTasks(), interpretation = `${c.classification || c.caseClass} coordination required across ${c.departments}.`; return `${caseProgressStrip(c, tasks)}<div class="case-layout"><div class="case-main-stack"><section class="case-section"><div class="case-section-head"><h2>AI Summary</h2><div class="case-section-head-actions"><span class="sub">Last generated ${aiSummaryGeneratedAt(c)}</span><span class="pill blue">AI generated</span><button type="button" class="icon-btn ai-summary-btn" title="Regenerate AI summary" aria-label="Regenerate AI summary" onclick="regenerateAiSummary('${c.id}')"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2.5l1.9 5.6 5.6 1.9-5.6 1.9L12 17.5l-1.9-5.6-5.6-1.9 5.6-1.9z"/><path d="M19 14.5l.9 2.3 2.3.9-2.3.9-.9 2.3-.9-2.3-2.3-.9 2.3-.9z"/></svg></button></div></div><div class="case-section-body">${caseNarrative(c, tasks)}</div></section><section class="case-section"><div class="case-section-head"><h2>Task Summary</h2></div><div class="case-section-body">${tasks.length ? tasks.map(t => `<div class="task-summary-row"><div><button class="case-link" onclick="openTask('${t[8]}')">${t[8]}</button><div class="sub">${t[3]}</div></div><span>${t[4]}</span>${pill(t[5])}${pill(effectiveTaskStatus(t))}</div>`).join('') : '<div class="case-empty">No Tasks have been created.</div>'}<button class="link" onclick="S.caseTab='Tasks';render()">View all ${tasks.length} Tasks ›</button></div></section></div><div class="case-side-stack"><section class="case-section"><div class="case-section-head"><h2>Case Information</h2></div><div class="case-section-body"><div class="case-kv-grid"><div class="case-kv"><label>Customer</label><strong>${c.customer}</strong></div><div class="case-kv"><label>Case Type</label><strong>${c.caseClass}</strong></div><div class="case-kv"><label>Priority</label><strong>${pill(c.priority)}</strong></div><div class="case-kv"><label>Departments</label><strong>${c.departments}</strong></div><div class="case-kv"><label>Pickup</label><strong>${c.pickup}</strong></div><div class="case-kv"><label>Drop</label><strong>${c.delivery}</strong></div><div class="case-kv"><label>Requested Delivery</label><strong>${c.requestedDate}</strong></div><div class="case-kv"><label>AI Confidence</label><strong>${c.confidence}%</strong></div></div></div></section>${caseActivityPreview(c)}</div></div>` }
         function orderLine(label, value) { return `<div class="order-line"><span>${label}</span><strong>${value || '—'}</strong></div>` }
+        // Sender (p) or receiver (d) address parts, in the order Opter shows them. Empty values show as a dash.
+        function addressLines(c, p) { return orderLine('Customer Number', c[p + 'cust']) + orderLine('Name', c[p + 'name']) + orderLine('Street Name', c[p + 'street']) + orderLine('Street Number', c[p + 'no']) + orderLine('Info', c[p + 'info']) + orderLine('Postal Code', c[p + 'post']) + orderLine('City', c[p + 'city']) + orderLine('Country', c[p + 'country']) + orderLine('Phone', c[p + 'phone']) + orderLine('From Time', c[p + 'from']) + orderLine('To Time', c[p + 'to']) }
         function orderCard(number, title, body, full = false, extra = '') { return `<section class="order-card ${full ? 'full' : ''}"><div class="order-card-head"><h3>${number}. ${title}</h3><div class="actions">${extra}</div></div><div class="order-card-body">${body}</div></section>` }
         S.opterOrders = S.opterOrders || {};
         S.orderChangeRequests = S.orderChangeRequests || {};
@@ -472,7 +486,7 @@ S.goodsRows = S.goodsRows || {};
 function goodsRowsFor(c) { if (!S.goodsRows[c.id]) S.goodsRows[c.id] = [['01','1','Export crate',c.goods,c.weight,'3.20 × 2.10 × 2.40 m',c.id.replace('CASE','PKG')+'-01'],['02','1','Export crate',c.goods,c.weight,'3.20 × 2.10 × 2.40 m',c.id.replace('CASE','PKG')+'-02']]; return S.goodsRows[c.id] }
 function addGoodsRow(caseId) { let rows = goodsRowsFor(selectedCaseData()); let n = String(rows.length+1).padStart(2,'0'); rows.push([n,'1','','','','',`${caseId.replace('CASE','PKG')}-${n}`]); if (S.opterOrders[caseId]) S.opterOrders[caseId].needsUpdate = true; render() }
 function removeGoodsRow(caseId, i) { let rows = goodsRowsFor(selectedCaseData()); if (rows.length <= 1) { toast('At least one item is required'); return } rows.splice(i,1); if (S.opterOrders[caseId]) S.opterOrders[caseId].needsUpdate = true; render() }
-function orderTabV2() { let c = selectedCaseData(), po = `PO-${c.id.slice(-4)}21`, ref = `${c.customer.split(' ')[0].toUpperCase()}-${c.id.slice(-4)}-26`; let customer = `<div class="order-data-grid">${orderLine('Customer', c.customer)}${orderLine('Invoice Marking', `${c.id.slice(-4)}-${c.customer.split(' ')[0].toUpperCase()}`)}${orderLine('Customer No.', c.customerNo)}${orderLine('Payer', `${c.customer} AB`)}${orderLine('Contact', c.contact)}${orderLine('Region', 'DACH')}${orderLine('Customer Reference', ref)}${orderLine('PO Number', po)}</div>`; let pickup = `<div class="order-data-grid">${orderLine('Location', c.pickup)}${orderLine('Contact', c.contact)}${orderLine('Pickup Date / Time', `${caseDateOnly(c.due)}, 08:00–10:00`)}${orderLine('Loading Reference', ref)}${orderLine('Geographic / Price Zone', `${String(c.pickup).split(',')[0]} / SE-7`)}</div>`; let delivery = `<div class="order-data-grid">${orderLine('Location', c.delivery)}${orderLine('Contact', 'Anna Keller')}${orderLine('Delivery Date / Time', `${c.requestedDate}, 09:00–12:00`)}${orderLine('Delivery Reference', c.id.replace('CASE', 'DEL'))}${orderLine('Geographic / Price Zone', `${String(c.delivery).split(',')[0]} / EU-3`)}</div>`; let shipment = `<div class="order-data-grid">${orderLine('Transport Mode', 'Road Freight')}${orderLine('Distance', '1,640 km')}${orderLine('Service', 'Direct')}${orderLine('Estimated Driving Time', '19 h 30 min')}${orderLine('Incoterm', `DAP ${String(c.delivery).split(',')[0]}`)}${orderLine('Temperature Requirement', 'None')}${orderLine('Freight Document No.', '<span data-aa-style="aa-static-style-34">Pending</span>')}${orderLine('Dangerous Goods', 'No')}${orderLine('Estimated CO₂ Emission', '418 kg')}</div>`; let metrics = [['Number of Packages','2'],['Gross Weight',c.weight],['Chargeable Weight',c.weight],['Length','3.20 m'],['Width','2.10 m'],['Height','2.40 m'],['Total Volume','32.3 m³'],['Pallet Spaces','4'],['Loading Metres','6.4']].map(x => `<div class="order-metric"><span>${x[0]}</span><strong>${x[1]}</strong></div>`).join(''); let goods = `<div data-aa-style="aa-static-style-35"><table class="compact-order-table"><thead><tr><th>Item</th><th>Qty</th><th>Package Type</th><th>Goods Description</th><th>Weight</th><th>Dimensions</th><th>Package No.</th><th></th></tr></thead><tbody>${goodsRowsFor(c).map((r,i)=>`<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td><td>${r[3]}</td><td>${r[4]}</td><td>${r[5]}</td><td>${r[6]}</td><td data-aa-style="aa-static-style-36"><button class="link" title="Remove row" onclick="removeGoodsRow('${c.id}',${i})">✕</button></td></tr>`).join('')}</tbody></table></div>`; return `<div class="order-grid">${orderCard('1','Customer & Order',customer,true)}${orderCard('2','Pickup / Sender',pickup,true)}${orderCard('3','Delivery / Receiver',delivery,true)}${orderCard('4','Shipment Details',shipment,true,'<span class="pill amber">1 field pending</span>')}${orderCard('5','Dimensions & Capacity',`<div class="order-metrics">${metrics}</div>`,true)}${orderCard('6','Goods / Colli',goods,true,`<button class="link" onclick="addGoodsRow('${c.id}')">+ Add Item</button>`)}</div><div class="case-note">ⓘ Order changes are recorded in Case Activity.</div>` }
+function orderTabV2() { let c = selectedCaseData(), po = `PO-${c.id.slice(-4)}21`, ref = `${c.customer.split(' ')[0].toUpperCase()}-${c.id.slice(-4)}-26`; let customer = `<div class="order-data-grid">${orderLine('Customer', c.customer)}${orderLine('Invoice Marking', `${c.id.slice(-4)}-${c.customer.split(' ')[0].toUpperCase()}`)}${orderLine('Customer No.', c.customerNo)}${orderLine('Payer', `${c.customer} AB`)}${orderLine('Contact', c.contact)}${orderLine('Region', 'DACH')}${orderLine('Customer Reference', ref)}${orderLine('PO Number', po)}${orderLine('Project Number', c.proj)}${orderLine('Internal Message', c.imsg)}${orderLine('External Message', c.emsg)}${orderLine('Delivery Instruction', c.dlvi)}</div>`; let pickup = `<div class="order-data-grid">${orderLine('Customer Number', c.pcust)}${orderLine('Name', c.pname)}${orderLine('Street Name', c.pstreet)}${orderLine('Street Number', c.pno)}${orderLine('Info', c.pinfo)}${orderLine('Postal Code', c.ppost)}${orderLine('City', c.pcity)}${orderLine('Country', c.pcountry)}${orderLine('Phone', c.pphone)}${orderLine('Location', c.pickup)}${orderLine('Contact', c.contact)}${orderLine('Pickup Date / Time', `${caseDateOnly(c.due)}, 08:00–10:00`)}${orderLine('From Time', c.pfrom)}${orderLine('To Time', c.pto)}${orderLine('Sender Reference', ref)}${orderLine('Geographic / Price Zone', `${String(c.pickup).split(',')[0]} / SE-7`)}</div>`; let delivery = `<div class="order-data-grid">${orderLine('Customer Number', c.dcust)}${orderLine('Name', c.dname)}${orderLine('Street Name', c.dstreet)}${orderLine('Street Number', c.dno)}${orderLine('Info', c.dinfo)}${orderLine('Postal Code', c.dpost)}${orderLine('City', c.dcity)}${orderLine('Country', c.dcountry)}${orderLine('Phone', c.dphone)}${orderLine('Location', c.delivery)}${orderLine('Contact', 'Anna Keller')}${orderLine('Delivery Date / Time', `${c.requestedDate}, 09:00–12:00`)}${orderLine('From Time', c.dfrom)}${orderLine('To Time', c.dto)}${orderLine('Receiver Reference', c.id.replace('CASE', 'DEL'))}${orderLine('Geographic / Price Zone', `${String(c.delivery).split(',')[0]} / EU-3`)}</div>`; let shipment = `<div class="order-data-grid">${orderLine('Transport Mode', 'Road Freight')}${orderLine('Vehicle Type', c.vehType)}${orderLine('Distance', '1,640 km')}${orderLine('Service', 'Direct')}${orderLine('Estimated Driving Time', '19 h 30 min')}${orderLine('Incoterm', `DAP ${String(c.delivery).split(',')[0]}`)}${orderLine('Temperature Requirement', 'None')}${orderLine('Freight Document No.', '<span data-aa-style="aa-static-style-34">Pending</span>')}${orderLine('Dangerous Goods', 'No')}${orderLine('Estimated CO₂ Emission', '418 kg')}</div>`; let metrics = [['Number of Packages','2'],['Gross Weight',c.weight],['Chargeable Weight',c.weight],['Length','3.20 m'],['Width','2.10 m'],['Height','2.40 m'],['Total Volume','32.3 m³'],['Pallet Spaces','4'],['Loading Metres','6.4']].map(x => `<div class="order-metric"><span>${x[0]}</span><strong>${x[1]}</strong></div>`).join(''); let goods = `<div data-aa-style="aa-static-style-35"><table class="compact-order-table"><thead><tr><th>Item</th><th>Qty</th><th>Package Type</th><th>Goods Description</th><th>Weight</th><th>Dimensions</th><th>Package No.</th><th>Goods Marking</th><th>Volume (m³)</th><th>Pallet Spaces</th><th></th></tr></thead><tbody>${goodsRowsFor(c).map((r,i)=>`<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td><td>${r[3]}</td><td>${r[4]}</td><td>${r[5]}</td><td>${r[6]}</td><td>${(c.goodsDetail&&c.goodsDetail[i]||{}).marking||'—'}</td><td>${(c.goodsDetail&&c.goodsDetail[i]||{}).vol||'—'}</td><td>${(c.goodsDetail&&c.goodsDetail[i]||{}).pallet||'—'}</td><td data-aa-style="aa-static-style-36"><button class="link" title="Remove row" onclick="removeGoodsRow('${c.id}',${i})">✕</button></td></tr>`).join('')}</tbody></table></div>`; return `<div class="order-grid">${orderCard('1','Customer & Order',customer,true)}${orderCard('2','Pickup / Sender',pickup,true)}${orderCard('3','Delivery / Receiver',delivery,true)}${orderCard('4','Shipment Details',shipment,true,'<span class="pill amber">1 field pending</span>')}${orderCard('5','Order Data',`<div class="order-data-grid">${orderLine('Waybill Number', c.waybill)}${orderLine('Summera ID', c.summera)}${orderLine('Original Order Number', c.origOrder)}${orderLine('Order Type', c.ordType)}${orderLine('Order Date', c.orderDate)}</div>`,true)}${orderCard('6','Dimensions & Capacity',`<div class="order-metrics">${metrics}</div>`,true)}${orderCard('7','Goods / Colli',goods,true,`<button class="link" onclick="addGoodsRow('${c.id}')">+ Add Item</button>`)}</div><div class="case-note">ⓘ Order changes are recorded in Case Activity.</div>` }
         function caseTasksV2() { let c = selectedCaseData(), tasks = selectedCaseTasks(), done = taskCompletedCount(tasks), pct = tasks.length ? Math.round(done / tasks.length * 100) : 0; return `<section class="case-section"><div class="case-section-head"><div><h2>Tasks for this Case</h2><span class="sub">${done} of ${tasks.length} Tasks completed</span></div>${S.role === 'Admin' ? `<button class="btn primary" onclick="openEditor('newTask','${c.id}')">+ Add Task</button>` : ''}</div><div class="case-section-body"><div class="progress-track" data-aa-style="aa-static-style-37"><i style="display:block;height:100%;width:${pct}%;background:var(--blue)"></i></div>${tasks.map(t => { let assignment = TASK_ASSIGNMENTS[t[8]], assigned = assignment?.assignedAt || c.created; return `<article class="task-work-item"><div class="task-work-top"><div><button class="case-link" onclick="openTask('${t[8]}')">${t[8]}</button><h3 data-aa-style="aa-static-style-38">${t[0]}</h3></div>${pill(t[5])}${pill(effectiveTaskStatus(t))}</div><div class="task-work-meta"><div><small>Department</small><strong>${t[3]}</strong></div><div><small>Owner</small><strong>${t[4]}</strong></div><div><small>Assigned</small><strong>${caseDateOnly(assigned)}</strong></div><div><small>Due</small><strong>${t[6]}</strong></div></div><div data-aa-style="aa-static-style-39"><button class="link" onclick="openTask('${t[8]}')">View Details ›</button></div></article>` }).join('')}</div></section>` }
         function communicationTabV2() { let c = selectedCaseData(), record = acknowledgementRecord(c.id), notes = S.notes.filter(n => !n.caseId || n.caseId === c.id), pinned = notes.filter(n => n.pinned), rest = notes.filter(n => !n.pinned); return `${record ? `<div class="notice green"><strong>Customer acknowledgement was sent by ${record.by} on ${record.at}.</strong></div>` : `<div class="notice"><strong>Customer acknowledgement is pending.</strong><span class="sub"> Prepared automatically from the approved Case.</span><button class="compact-action" data-aa-style="aa-static-style-40" onclick="openAcknowledgement('${c.id}')">Review acknowledgement</button></div>`}<div class="case-layout"><section class="case-section"><div class="case-section-head"><h2>Internal Communication</h2><button class="btn primary" onclick="openCommunication('Internal Note')">+ Add Comment</button></div><div class="case-section-body">${pinned.length ? `<div class="internal-comment-group"><span class="sub">📌 Pinned (${pinned.length})</span>${pinned.map(n=>internalCommentRow(n)).join('')}</div>`:''}<div class="internal-comment-group">${rest.length ? rest.map(n=>internalCommentRow(n)).join('') : '<div class="case-empty">No internal comments yet.</div>'}</div><div class="internal-composer"><div><strong>Add Internal Comment</strong><div class="sub">Internal only · Customer will not see this</div></div><input id="case-comment-v2" placeholder="Write a comment for your team…"><button class="btn" onclick="openCommunication('Internal Note')">Add Comment</button></div></div></section><div class="case-side-stack"><section class="case-section"><div class="case-section-head"><h2>Communication Summary</h2></div><div class="case-section-body case-kv-grid"><div class="case-kv"><label>Customer Contact</label><strong>${c.contact}</strong></div><div class="case-kv"><label>Email</label><strong>${c.email}</strong></div><div class="case-kv"><label>Acknowledgement</label><strong>${pill(record ? 'Sent' : 'Pending')}</strong></div><div class="case-kv"><label>Last customer email</label><strong>${c.created}</strong></div><div class="case-kv"><label>Internal comments</label><strong>${notes.length}</strong></div><div class="case-kv"><label>Attachments</label><strong>${(c.attachments || []).length}</strong></div></div></section></div></div>` }
 function internalCommentRow(n){return `<div class="people-row"><span class="avatar">${casePersonInitials(n.author)}</span><div><strong>${n.author}</strong> <span class="sub">· ${n.at}</span><p data-aa-style="aa-static-style-38">${n.text}</p></div>${n.pinned?'<span class="sub">📌</span>':''}</div>`}
@@ -550,7 +564,7 @@ function internalCommentRow(n){return `<div class="people-row"><span class="avat
         const mentionCommunicationOpen = openCommunication;
         openCommunication = function (mode, replyTo=null) { let draft=document.getElementById('case-comment-v2')?.value?.trim(); mentionCommunicationOpen(mode,replyTo); if(mode==='Internal Note'&&draft&&S.editorData){S.editorData.body=draft;render()} }
         document.head.insertAdjacentHTML('beforeend',`<style>.mention-menu{position:fixed;z-index:5000;background:#fff;border:1px solid var(--line);border-radius:7px;box-shadow:0 10px 30px rgba(16,36,58,.18);padding:6px;max-height:270px;overflow:auto}.mention-menu-title{padding:7px 9px;color:var(--muted);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em}.mention-menu button{width:100%;display:flex;align-items:center;gap:9px;border:0;background:#fff;border-radius:5px;padding:8px;text-align:left;color:var(--ink)}.mention-menu button:hover{background:#eef6fd}.mention-menu button span:last-child{display:flex;flex-direction:column}.mention-menu button small{color:var(--muted);margin-top:2px}.mention-tag{display:inline-block;background:#e6f2ff;color:#086bb8;border-radius:4px;padding:1px 5px;font-weight:700}.admin-inline-task input,.admin-inline-task select{width:100%;min-height:38px;border:1px solid var(--line);border-radius:5px;background:#fff;padding:7px 9px}
-.rvf-select {
+.rvf-select:not([hidden]) {
     display: block;
     width: 100%;
     height: 38px;
@@ -566,6 +580,10 @@ function internalCommentRow(n){return `<div class="people-row"><span class="avat
 .rvf-select:focus {
     outline: 2px solid rgba(8, 119, 209, 0.2);
     border-color: var(--blue, #0877d1);
+}
+.rvf-select[hidden], select[hidden] {
+    display: none !important;
+    visibility: hidden !important;
 }
 
 </style>`)
@@ -885,16 +903,16 @@ function masterContent(){let tab=S.masterTab||'Task Master';if(tab==='Categories
         const reviewerHomeQueueRowsBase=queueRows;queueRows=function(home=false){let rows=reviewerHomeQueueRowsBase(home);return home?rows.map(row=>{let mapped=[...row];mapped[5]=reviewerRequestDueDateTime(row[0]);return mapped}):rows};
         const reviewerHomeQueueTableBase=queueTable;queueTable=function(home=false){let html=reviewerHomeQueueTableBase(home);if(!home)return html;let template=document.createElement('template');template.innerHTML=html;template.content.querySelectorAll('table').forEach(table=>{let headers=[...table.querySelectorAll('thead th')],dueIndex=headers.findIndex(header=>/^Received/.test(header.textContent.trim()));if(dueIndex<0)return;let button=headers[dueIndex].querySelector('.sort-head');if(button&&button.firstChild)button.firstChild.nodeValue='Due Date / Time';else headers[dueIndex].textContent='Due Date / Time'});return template.innerHTML};
         /* Reviewer request filters are isolated by view. */
-        S.reviewerFilters=S.reviewerFilters||{'Awaiting Review':{q:'',customer:'All',department:'All',priority:'All',due:'All'},'Needs Clarification':{q:'',missing:'All',customer:'All',department:'All',priority:'All'}};S.queueQuery='';S.queueIssue='All';S.queueCustomer='All';
+        S.reviewerFilters=S.reviewerFilters||{'Awaiting Review':{q:'',customer:[],department:[],priority:[],due:'All',category:[],casetype:[],source:[]},'Needs Clarification':{q:'',missing:[],customer:[],department:[],priority:[],category:[],casetype:[],source:[]}};S.queueQuery='';S.queueIssue='All';S.queueCustomer='All';
         function reviewerFilterState(){return S.reviewerFilters[S.queueTab]||S.reviewerFilters['Awaiting Review']}
-        function reviewerRequestData(row){let metadata=ensureReviewOrderData(reviewRequestMetadata(row[0]))||{},clarification=CLARIFICATIONS[row[0]];return{customer:row[1],department:String(metadata.departments||'').split(',').map(value=>value.trim()).filter(Boolean),priority:requestPriority(row),due:reviewerRequestDueDateTime(row[0]).split(',')[0],missing:clarification?.missing||row[4]||'Information required'}}
+        function reviewerRequestData(row){let metadata=ensureReviewOrderData(reviewRequestMetadata(row[0]))||{},clarification=CLARIFICATIONS[row[0]];return{customer:row[1],department:String(metadata.departments||'').split(',').map(value=>value.trim()).filter(Boolean),priority:requestPriority(row),due:reviewerRequestDueDateTime(row[0]).split(',')[0],missing:clarification?.missing||row[4]||'Information required',category:metadata.category||metadata.classification||'',casetype:metadata.caseClass||metadata.type||'',source:metadata.source||'Email'}}
         function setReviewerFilter(key,value){reviewerFilterState()[key]=value;render()}
-        function resetReviewerFilters(){let state=reviewerFilterState();Object.keys(state).forEach(key=>state[key]=key==='q'?'':'All');render()}
+        function resetReviewerFilters(){let state=reviewerFilterState();Object.keys(state).forEach(key=>state[key]=key==='q'?'':key==='due'?'All':[]);render()}
         function switchReviewerView(tab){S.queueTab=tab;render()}
         function reviewerFilterOptions(rows,key){let values=[];rows.forEach(row=>{let value=reviewerRequestData(row)[key];values.push(...(Array.isArray(value)?value:[value]))});return [...new Set(values.filter(Boolean))].sort()}
         function reviewerFilterSelect(label,key,values){let state=reviewerFilterState();return `<select aria-label="${label}" onchange="setReviewerFilter('${key}',this.value)"><option value="All">All ${label}</option>${values.map(value=>`<option value="${editorText(value)}" ${state[key]===value?'selected':''}>${editorText(value)}</option>`).join('')}</select>`}
         function reviewerViewFilterBar(){let state=reviewerFilterState(),rows=QUEUE.filter(row=>row[6]===S.queueTab),search=`<input value="${editorText(state.q)}" onchange="setReviewerFilter('q',this.value)" onkeyup="if(event.key==='Enter')setReviewerFilter('q',this.value)" placeholder="Search requests...">`,customer=reviewerFilterSelect('Customers','customer',reviewerFilterOptions(rows,'customer')),department=reviewerFilterSelect('Departments','department',reviewerFilterOptions(rows,'department')),priority=reviewerFilterSelect('Priorities','priority',reviewerFilterOptions(rows,'priority')),reset='<button class="btn" onclick="resetReviewerFilters()">Reset</button>';if(S.queueTab==='Needs Clarification')return `${search}${customer}${department}${priority}${reset}`;let due=reviewerFilterSelect('Due Dates','due',reviewerFilterOptions(rows,'due'));return `${search}${customer}${department}${priority}${due}${reset}`}
-        const viewSpecificQueueRowsBase=queueRows;queueRows=function(home=false){let rows=viewSpecificQueueRowsBase(home);if(home||!['Awaiting Review','Needs Clarification'].includes(S.queueTab))return rows;let state=reviewerFilterState(),query=state.q.toLowerCase();return rows.filter(row=>{let data=reviewerRequestData(row);return(!query||row.join(' ').toLowerCase().includes(query))&&(state.customer==='All'||data.customer===state.customer)&&(state.department==='All'||data.department.includes(state.department))&&(state.priority==='All'||data.priority===state.priority)&&(S.queueTab!=='Awaiting Review'||state.due==='All'||data.due===state.due)})};
+        const viewSpecificQueueRowsBase=queueRows;queueRows=function(home=false){let rows=viewSpecificQueueRowsBase(home);if(home||!['Awaiting Review','Needs Clarification'].includes(S.queueTab))return rows;let state=reviewerFilterState(),query=(state.q||'').toLowerCase();return rows.filter(row=>{let data=reviewerRequestData(row),custs=rvfArr(state.customer),depts=rvfArr(state.department),prios=rvfArr(state.priority),cats=rvfArr(state.category),types=rvfArr(state.casetype),srcs=rvfArr(state.source),miss=rvfArr(state.missing);let matchCust=!custs.length||custs.includes('All')||custs.includes(data.customer),matchDept=!depts.length||depts.includes('All')||(Array.isArray(data.department)?data.department.some(d=>depts.includes(d)):depts.includes(data.department)),matchPrio=!prios.length||prios.includes('All')||prios.includes(data.priority),matchDue=S.queueTab!=='Awaiting Review'||state.due==='All'||reviewerDueMatch(state,data.due)||data.due===state.due,matchCat=!cats.length||cats.includes('All')||(data.category&&cats.includes(data.category)),matchType=!types.length||types.includes('All')||(data.casetype&&types.includes(data.casetype)),matchSrc=!srcs.length||srcs.includes('All')||(data.source&&srcs.includes(data.source)),matchMiss=!miss.length||miss.includes('All')||(data.missing&&miss.includes(data.missing));return(!query||row.join(' ').toLowerCase().includes(query))&&matchCust&&matchDept&&matchPrio&&matchDue&&matchCat&&matchType&&matchSrc&&matchMiss})};
         const viewSpecificReviewBase=review;review=function(){if(!['Awaiting Review','Needs Clarification'].includes(S.queueTab))S.queueTab='Awaiting Review';let template=document.createElement('template');template.innerHTML=viewSpecificReviewBase();let tabs=[...template.content.querySelectorAll('.tabs button')];tabs.forEach(button=>{let clarification=/Needs Clarification|Missing Information/.test(button.textContent||'');if(clarification)button.innerHTML=button.innerHTML.replace('Needs Clarification','Missing Information');let tab=clarification?'Needs Clarification':'Awaiting Review';button.setAttribute('onclick',`switchReviewerView('${tab}')`)});let filters=template.content.querySelector('.filters');if(filters)filters.innerHTML=reviewerViewFilterBar();return template.innerHTML};
         const missingInformationMetricBase=metricAction;metricAction=function(label){if(/Missing Information/.test(label))return openQueueTab('Needs Clarification');return missingInformationMetricBase(label)};
         adminHome=function(){return head('Good morning, John','Review incoming emails, approve Cases and keep operations moving.')+kpis([['Cases Awaiting Review',QUEUE.filter(item=>item[6]==='Awaiting Review').length,'red'],['Missing Information',QUEUE.filter(item=>item[6]==='Needs Clarification').length,'amber'],['Acknowledgement Pending',QUEUE.filter(item=>item[6]==='Acknowledgement Pending').length,'amber']])+`<div class="card"><div class="card-head"><h2>Recent Items Requiring Attention</h2><span class="sub">Open an item to review its details</span></div>${queueTable(true)}</div>`};
@@ -1249,7 +1267,7 @@ S.reviewerActionFilters=S.reviewerActionFilters||{q:'',customer:'All',priority:'
                 let section=document.createElement('section');section.className='order-card full order-other-details';
                 let value=S.orderEdits[c.id]?.otherDetails??defaultOrderOtherDetails(c);
                 let inline=S.orderOtherEditing?`<div class="order-other-inline-editor"><label>Additional detail<textarea id="order-other-detail-input" oninput="updateOrderOtherDraft(this.value)" placeholder="Enter a detail found in the email or attachments that is not a predefined Order field">${editorText(S.orderOtherDraft||'')}</textarea></label><div class="actions"><button class="btn" type="button" onclick="cancelOrderOtherDetail()">Cancel</button><button class="btn primary" type="button" onclick="addOrderOtherDetail()">Add detail</button></div></div>`:'';
-                section.innerHTML=`<div class="order-card-head"><h3>7. Additional Details Found</h3><button class="order-other-add" type="button" title="Add additional detail" aria-label="Add additional detail" onclick="beginOrderOtherDetail()">+</button></div><div class="order-card-body"><div class="sub" data-aa-style="aa-static-style-66">Details found in the email and attachments that are not predefined Order fields.</div><div class="order-other-details-content"><p>${editorText(value)}</p>${confidenceBadge(86)}${inline}</div></div>`;
+                section.innerHTML=`<div class="order-card-head"><h3>8. Additional Details Found</h3><button class="order-other-add" type="button" title="Add additional detail" aria-label="Add additional detail" onclick="beginOrderOtherDetail()">+</button></div><div class="order-card-body"><div class="sub" data-aa-style="aa-static-style-66">Details found in the email and attachments that are not predefined Order fields.</div><div class="order-other-details-content"><p>${editorText(value)}</p>${confidenceBadge(86)}${inline}</div></div>`;
                 grid.append(section);
             }
             return template.innerHTML;
@@ -1420,7 +1438,7 @@ S.reviewerActionFilters=S.reviewerActionFilters||{q:'',customer:'All',priority:'
         const inlineOrderTabBase=orderTabV2;orderTabV2=function(){
             let html=inlineOrderTabBase(),caseId=S.selectedCase,pending=S.orderChangeRequests[caseId]||[];
             let template=document.createElement('template');template.innerHTML=html,rows=[...template.content.querySelectorAll('.order-line,.order-metric')];
-            rows.forEach((row,index)=>{let label=row.querySelector(':scope > span')?.textContent?.trim()||`Field ${index+1}`,value=row.querySelector('strong');if(value){let control=document.createElement('div');control.className='order-inline-control';control.innerHTML=inlineOrderControl({index,label,value:value.textContent.trim()});value.replaceWith(control);let change=pending.find(x=>x.label===label);if(change){row.classList.add('order-field-pending');row.insertAdjacentHTML('beforeend',`<div class="order-change-pending"><div class="order-change-note"><strong>AI suggests: ${editorText(change.value)}</strong><span class="sub">${editorText(change.note)}</span></div><div class="order-change-actions"><button type="button" class="confirm" title="Confirm" onclick="confirmOrderChange('${caseId}','${editorText(label)}')">✓</button><button type="button" class="reject" title="Reject" onclick="rejectOrderChange('${caseId}','${editorText(label)}')">✕</button></div></div>`)}}});
+            rows.forEach((row,index)=>{let label=row.querySelector(':scope > span')?.textContent?.trim()||`Field ${index+1}`,value=row.querySelector('strong');if(value){let control=document.createElement('div');control.className='order-inline-control';control.innerHTML=inlineOrderControl({index,label,value:value.textContent.trim()});value.replaceWith(control);let change=pending.find(x=>x.label===label);if(change){row.classList.add('order-field-pending');row.insertAdjacentHTML('beforeend',`<div class="order-change-pending"><div class="order-change-note"><strong>AI suggests: ${editorText(change.value)}</strong></div><div class="order-change-actions"><button type="button" class="confirm" title="Confirm" onclick="confirmOrderChange('${caseId}','${editorText(label)}')">✓</button><button type="button" class="reject" title="Reject" onclick="rejectOrderChange('${caseId}','${editorText(label)}')">✕</button></div></div>`)}}});
             let table=template.content.querySelector('.compact-order-table'),headings=table?[...table.querySelectorAll('thead th')].map(th=>th.textContent.trim()):[];
             table?.querySelectorAll('tbody tr').forEach((tr,row)=>[...tr.cells].slice(0,7).forEach((cell,column)=>{cell.innerHTML=inlineGoodsControl(row,column,cell.textContent.trim(),headings[column]||'')}));
             return template.innerHTML;
@@ -1447,46 +1465,41 @@ function dueIso(s){return /^\d{4}-\d{2}-\d{2}$/.test(s||'')?new Date(s+'T00:00:0
 function dueRange(state){let t=new Date(2026,9,9),k=state.due;if(k==='Today')return[t,t];if(k==='This week'){let d=(t.getDay()+6)%7;return[new Date(2026,9,9-d),new Date(2026,9,9-d+6)]}if(k==='This month')return[new Date(t.getFullYear(),t.getMonth(),1),new Date(t.getFullYear(),t.getMonth()+1,0)];if(k==='Custom')return[dueIso(state.dueFrom),dueIso(state.dueTo)];return null}
 function reviewerDueMatch(state,dueText){let r=dueRange(state);if(!r)return true;let d=dueParse(dueText);if(!d)return !r[0]&&!r[1];return(!r[0]||d>=r[0])&&(!r[1]||d<=r[1])}
 
-const RVF_OPTS={},RVF_LABEL={customer:'Customer',department:'Department',category:'Category',subcategory:'Subcategory',casetype:'Case Type',priority:'Priority',source:'Source',missing:'Missing'};
-function rvfArr(v){return Array.isArray(v)?v:[]}
-function rvfToggleIdx(k,i){let s=reviewerFilterState(),v=RVF_OPTS[k][i],a=rvfArr(s[k]);s[k]=a.includes(v)?a.filter(x=>x!==v):[...a,v];render()}
-function rvfClearKey(k){let s=reviewerFilterState();if(k==='due'){s.due='All';s.dueFrom='';s.dueTo=''}else s[k]=[];render()}
-function rvfDue(p){let s=reviewerFilterState();s.due=s.due===p?'All':p;render()}
-function rvfOpenKey(k){S.rvfOpen=S.rvfOpen===k?null:k;S.rvfSearch='';render()}
+const RVF_OPTS={},RVF_LABEL={customer:'Customer',department:'Department',category:'Category',subcategory:'Subcategory',casetype:'Case Type',priority:'Priority',source:'Source',missing:'Missing Information',status:'Case Status',ack:'Acknowledgement'};
+function rvfArr(v){if(Array.isArray(v))return v;if(typeof v==='string'&&v&&v!=='All')return[v];return[]}
+/* Filters picked inside the popup go to a draft copy; only Apply Filter writes them to the real filter state. */
+const RVF_KEYS=['customer','department','category','subcategory','casetype','priority','source','missing','status','ack'];
+function rvfDraft(){return(S.page==='cases'?S.cfModal:S.rvfModal)&&S.rvfDraft?S.rvfDraft:null}
+function rvfTarget(){return rvfDraft()||reviewerFilterState()}
+function rvfSet(k,v){rvfTarget()[k]=v;render()}
+function rvfModalOpen(on){let s=reviewerFilterState();S.rvfOpen=null;S.rvfSearch='';S.rvfDraft=on?JSON.parse(JSON.stringify(s)):null;if(S.page==='cases')S.cfModal=on;else S.rvfModal=on;render()}
+function rvfApply(){let d=S.rvfDraft,s=reviewerFilterState();if(d)Object.keys(d).forEach(k=>{if(k!=='q')s[k]=d[k]});rvfModalOpen(false)}
+function rvfToggleVal(k,val){let s=rvfTarget(),a=rvfArr(s[k]);s[k]=a.includes(val)?a.filter(x=>x!==val):[...a,val];let hadFocus=document.activeElement&&document.activeElement.id==='rvf-search',cursor=hadFocus?document.activeElement.selectionStart:null;render();if(S.rvfOpen&&hadFocus){setTimeout(()=>{let el=document.getElementById('rvf-search');if(el){el.focus();if(cursor!==null)el.setSelectionRange(cursor,cursor)}},15)}}
+function rvfRemoveVal(k,val){let s=rvfTarget(),a=rvfArr(s[k]);s[k]=a.filter(x=>x!==val);render()}
+function rvfToggleIdx(k,i){let v=(RVF_OPTS[k]||[])[i];if(v!==undefined)rvfToggleVal(k,v)}
+function rvfClearKey(k){let s=rvfTarget();if(k==='due'){s.due='All';s.dueFrom='';s.dueTo=''}else s[k]=[];render()}
+function rvfDue(p){let s=rvfTarget();s.due=s.due===p?'All':p;render()}
+function rvfOpenKey(k){S.rvfOpen=S.rvfOpen===k?null:k;S.rvfSearch='';render();if(S.rvfOpen){setTimeout(()=>{let el=document.getElementById('rvf-search');if(el)el.focus()},25)}}
 function rvfSearch(v){S.rvfSearch=v;render();let el=document.getElementById('rvf-search');if(el){el.focus();el.setSelectionRange(v.length,v.length)}}
-resetReviewerFilters=function(){let s=reviewerFilterState();s.q='';s.due='All';s.dueFrom='';s.dueTo='';['customer','department','category','subcategory','casetype','priority','source','missing','status','ack'].forEach(k=>{if(k in s)s[k]=Array.isArray(s[k])?[]:'All'});S.rvfOpen=null;render()};
+resetReviewerFilters=function(){let d=rvfDraft(),s=d||reviewerFilterState();if(!d)s.q='';s.due='All';s.dueFrom='';s.dueTo='';RVF_KEYS.forEach(k=>{if(k in s)s[k]=[]});S.rvfOpen=null;render()};
 function rvfIso(v){return /^\d{4}-\d{2}-\d{2}$/.test(v||'')?v:''}
 function rvfFmt(v){let m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(v||'');return m?m[3]+'/'+m[2]+'/'+m[1]:'…'}
 function rvfDueText(s){return s.due==='Custom'?(rvfIso(s.dueFrom)||rvfIso(s.dueTo)?rvfFmt(s.dueFrom)+' – '+rvfFmt(s.dueTo):'Custom'):s.due}
-function rvfTrigger(key,label,summary,active,body,width){let open=S.rvfOpen===key;return `<span class="rvf-wrap" data-aa-style="aa-static-style-70"><button type="button" onclick="rvfOpenKey('${key}')" style="display:flex;width:100%;box-sizing:border-box;align-items:center;gap:7px;height:38px;padding:0 10px;border-radius:4px;border:1px solid ${open?'var(--blue)':'var(--line)'};background:#fff;color:var(--ink);font:500 13px Inter,sans-serif;cursor:pointer;white-space:nowrap">${active?`<span data-aa-style="aa-static-style-71">${editorText(summary)}</span>`:'<span>All</span>'}<span style="margin-left:auto;font-size:10px;color:var(--muted);display:inline-block;transition:transform .15s;transform:rotate(${open?180:0}deg)">▾</span></button>${open?`<div data-aa-style="aa-static-style-72">${body}</div>`:''}</span>`}
-function rvfCheck(on){return `<span style="flex:none;width:17px;height:17px;border-radius:3px;border:1px solid ${on?'#147bd1':'#b8c6d4'};background:${on?'#147bd1':'#fff'};color:#fff;font-size:11px;line-height:15px;text-align:center">${on?'✓':''}</span>`}
+function rvfTrigger(key,label,summary,active,body,width){let open=S.rvfOpen===key;return `<div class="rvf-wrap ds-multi-wrap" style="position:relative;width:100%"><div class="ds-multi-box ${open?'open':''} ${active?'has-value':''}" onclick="rvfOpenKey('${key}')" tabindex="0" role="combobox" aria-expanded="${open}"><div class="ds-multi-chips">${active?`<span class="ds-filter-chip" onclick="event.stopPropagation()">${editorText(summary)}<button type="button" class="ds-filter-chip-remove" onclick="event.stopPropagation();rvfClearKey('${key}')" aria-label="Clear ${label}">&times;</button></span>`:'<span class="ds-multi-placeholder">All</span>'}</div><span class="ds-multi-arrow">▾</span></div>${open?`<div class="ds-multi-menu" onclick="event.stopPropagation()" style="${width?`min-width:${width}px;`:''}">${body}</div>`:''}</div>`}
+function rvfCheck(on){return `<span class="ds-multi-check">${on?'✓':''}</span>`}
 function rvfRow(label,on,click,radio){return `<button type="button" onclick="${click}" style="display:flex;align-items:center;gap:10px;width:100%;min-height:34px;padding:0 14px;border:0;background:${on?'#edf6fd':'#fff'};text-align:left;font:${on?650:500} 12.5px Inter,sans-serif;color:var(--ink);cursor:pointer" onmouseover="this.style.background='#f1f6fb'" onmouseout="this.style.background='${on?'#edf6fd':'#fff'}'">${radio?`<span style="flex:none;width:17px;height:17px;border-radius:50%;border:1px solid ${on?'#147bd1':'#b8c6d4'};box-shadow:${on?'inset 0 0 0 3.5px #fff':'none'};background:${on?'#147bd1':'#fff'}"></span>`:rvfCheck(on)}<span data-aa-style="aa-static-style-73">${editorText(label)}</span></button>`}
-function rvfFoot(key,n){return `<div data-aa-style="aa-static-style-74"><span>${n?n+' selected':'Select one or more'}</span><button type="button" onclick="rvfClearKey('${key}')" style="border:0;background:none;color:${n?'#0871c7':'#a9b4c2'};font:600 12px Inter,sans-serif;cursor:pointer">Clear</button></div>`}
-function rvfMulti(key,vals,s,searchable){RVF_OPTS[key]=vals;let sel=rvfArr(s[key]),q=(S.rvfSearch||'').toLowerCase(),list=vals.map((v,i)=>[v,i]).filter(x=>!q||x[0].toLowerCase().includes(q));let body=(searchable?`<div data-aa-style="aa-static-style-75"><input id="rvf-search" value="${editorText(S.rvfSearch||'')}" oninput="rvfSearch(this.value)" placeholder="Search ${RVF_LABEL[key].toLowerCase()}..." data-aa-style="aa-static-style-76"></div>`:'')+`<div data-aa-style="aa-static-style-77">${list.length?list.map(x=>rvfRow(x[0],sel.includes(x[0]),`rvfToggleIdx('${key}',${x[1]})`)).join(''):'<div data-aa-style="aa-static-style-78">No matches</div>'}</div>`+rvfFoot(key,sel.length);return rvfTrigger(key,RVF_LABEL[key],sel.length>1?sel[0]+' +'+(sel.length-1):sel[0]||'',sel.length>0,body,searchable?280:260)}
-function rvfDueTrigger(s){let on=s.due&&s.due!=='All',inp='height:32px;border:1px solid #dce4ec;border-radius:4px;padding:0 8px;font:12.5px Inter,sans-serif;width:100%;box-sizing:border-box',body=`<div data-aa-style="aa-static-style-79">${DUE_PRESETS.map(p=>rvfRow(p,s.due===p,`rvfDue('${p}')`,true)).join('')}</div>${s.due==='Custom'?`<div data-aa-style="aa-static-style-80"><label data-aa-style="aa-static-style-81">From<input type="date" value="${rvfIso(s.dueFrom)}" onchange="setReviewerFilter('dueFrom',this.value)" style="${inp}"></label><label data-aa-style="aa-static-style-81">To<input type="date" value="${rvfIso(s.dueTo)}" onchange="setReviewerFilter('dueTo',this.value)" style="${inp}"></label></div>`:''}`+rvfFoot('due',on?1:0).replace('1 selected','Date range').replace('Select one or more','Pick a period');return rvfTrigger('due','Due date',rvfDueText(s),on,body,s.due==='Custom'?300:230)}
-function rvfSelect(key, label, vals, s) {
-  let cur = s[key] || 'All';
-  if (Array.isArray(cur)) cur = cur.length ? cur[0] : 'All';
-  let opts = ['All', ...vals];
-  return `<select class="rvf-select" aria-label="${label}" onchange="setReviewerFilter('${key}', this.value)">${opts.map(v => `<option value="${v}" ${cur === v ? 'selected' : ''}>${v === 'All' ? 'All' : editorText(v)}</option>`).join('')}</select>`;
-}
-function rvfDueSelect(s) {
-  let cur = s.due || 'All';
-  let custom = cur === 'Custom';
-  let iso = v => /^\d{4}-\d{2}-\d{2}$/.test(v || '') ? v : '';
-  return `<select class="rvf-select" aria-label="Due date" onchange="setReviewerFilter('due', this.value)"><option value="All" ${cur === 'All' ? 'selected' : ''}>All</option>${DUE_PRESETS.map(p => `<option value="${p}" ${cur === p ? 'selected' : ''}>${p}</option>`).join('')}</select>${custom ? `<div data-aa-style="aa-static-style-82"><label data-aa-style="aa-static-style-83">From<input type="date" value="${iso(s.dueFrom)}" onchange="setReviewerFilter('dueFrom', this.value)" data-aa-style="aa-static-style-84"></label><label data-aa-style="aa-static-style-83">To<input type="date" value="${iso(s.dueTo)}" onchange="setReviewerFilter('dueTo', this.value)" data-aa-style="aa-static-style-84"></label></div>` : ''}`;
-}
-function rvfModal(on) { S.rvfModal = on; render(); }
+function rvfFoot(key,n){return `<div class="ds-multi-foot"><span>${n?n+' selected':'Select one or more'}</span><button type="button" class="ds-multi-clear-btn" onclick="rvfClearKey('${key}')">Clear</button></div>`}
+function rvfMulti(key,vals,s,searchable){RVF_OPTS[key]=vals;let sel=rvfArr(s[key]),q=(S.rvfSearch||'').toLowerCase(),open=S.rvfOpen===key,label=RVF_LABEL[key]||key;let list=vals.filter(v=>{if(!q)return true;let text=String(v).toLowerCase();if(text.includes(q))return true;if(typeof MASTER_CUSTOMERS!=='undefined'&&key==='customer'){let m=MASTER_CUSTOMERS.find(c=>c.name===v);if(m&&((m.number&&String(m.number).toLowerCase().includes(q))||(m.code&&String(m.code).toLowerCase().includes(q))))return true}return false});let chipsHtml='';if(sel.length){chipsHtml=sel.map(v=>{let escVal=editorText(v),attrVal=v.replace(/'/g,"\\'");return `<span class="ds-filter-chip" onclick="event.stopPropagation()">${escVal}<button type="button" class="ds-filter-chip-remove" onclick="event.stopPropagation();rvfRemoveVal('${key}','${attrVal}')" aria-label="Remove ${escVal}">&times;</button></span>`}).join('')}else chipsHtml='<span class="ds-multi-placeholder">All</span>';let menuHtml='';if(open){let searchBox=searchable||vals.length>7?`<div class="ds-multi-search-wrap"><input class="ds-multi-search-input" id="rvf-search" value="${editorText(S.rvfSearch||'')}" oninput="rvfSearch(this.value)" placeholder="Search ${label.toLowerCase()}..." onclick="event.stopPropagation()"></div>`:'';let optionsHtml=list.length?list.map(opt=>{let isSel=sel.includes(opt),attrOpt=opt.replace(/'/g,"\\'");return `<div class="ds-multi-option ${isSel?'selected':''}" onclick="event.stopPropagation();rvfToggleVal('${key}','${attrOpt}')"><span class="ds-multi-check">${isSel?'✓':''}</span><span class="ds-multi-opt-label">${editorText(opt)}</span></div>`}).join(''):'<div class="ds-multi-empty">No matches found</div>';let footHtml=`<div class="ds-multi-foot"><span>${sel.length?sel.length+' selected':'Select one or more'}</span><button type="button" class="ds-multi-clear-btn" onclick="event.stopPropagation();rvfClearKey('${key}')">Clear</button></div>`;menuHtml=`<div class="ds-multi-menu" onclick="event.stopPropagation()">${searchBox}<div class="ds-multi-list">${optionsHtml}</div>${footHtml}</div>`}return `<div class="rvf-wrap ds-multi-wrap" style="position:relative;width:100%"><div class="ds-multi-box ${open?'open':''} ${sel.length?'has-value':''}" onclick="rvfOpenKey('${key}')" tabindex="0" role="combobox" aria-expanded="${open}"><div class="ds-multi-chips">${chipsHtml}</div><span class="ds-multi-arrow">▾</span></div>${menuHtml}</div>`}
+function rvfDueTrigger(s){let on=s.due&&s.due!=='All',inp='height:32px;border:1px solid #dce4ec;border-radius:4px;padding:0 8px;font:12.5px Inter,sans-serif;width:100%;box-sizing:border-box',body=`<div data-aa-style="aa-static-style-79">${DUE_PRESETS.map(p=>rvfRow(p,s.due===p,`rvfDue('${p}')`,true)).join('')}</div>${s.due==='Custom'?`<div data-aa-style="aa-static-style-80"><label data-aa-style="aa-static-style-81">From<input type="date" value="${rvfIso(s.dueFrom)}" onchange="rvfSet('dueFrom',this.value)" style="${inp}"></label><label data-aa-style="aa-static-style-81">To<input type="date" value="${rvfIso(s.dueTo)}" onchange="rvfSet('dueTo',this.value)" style="${inp}"></label></div>`:''}`+rvfFoot('due',on?1:0).replace('1 selected','Date range').replace('Select one or more','Pick a period');return rvfTrigger('due','Due date',rvfDueText(s),on,body,s.due==='Custom'?300:230)}
+function rvfSelect(key,label,vals,s){let cur=s[key]||'All';if(Array.isArray(cur))cur=cur.length?cur[0]:'All';let opts=['All',...vals];return `<select class="rvf-select" aria-label="${label}" onchange="setReviewerFilter('${key}', this.value)">${opts.map(v=>`<option value="${v}" ${cur===v?'selected':''}>${v==='All'?'All':editorText(v)}</option>`).join('')}</select>`}
+function rvfDueSelect(s){let cur=s.due||'All',custom=cur==='Custom',iso=v=>/^\d{4}-\d{2}-\d{2}$/.test(v||'')?v:'';return `<select class="rvf-select" aria-label="Due date" onchange="setReviewerFilter('due', this.value)"><option value="All" ${cur==='All'?'selected':''}>All</option>${DUE_PRESETS.map(p=>`<option value="${p}" ${cur===p?'selected':''}>${p}</option>`).join('')}</select>${custom?`<div data-aa-style="aa-static-style-82"><label data-aa-style="aa-static-style-83">From<input type="date" value="${iso(s.dueFrom)}" onchange="setReviewerFilter('dueFrom', this.value)" data-aa-style="aa-static-style-84"></label><label data-aa-style="aa-static-style-83">To<input type="date" value="${iso(s.dueTo)}" onchange="setReviewerFilter('dueTo', this.value)" data-aa-style="aa-static-style-84"></label></div>`:''}`}
+function rvfModal(on){rvfModalOpen(on)}
 reviewerViewFilterBar = function () {
   let s = reviewerFilterState(), rows = QUEUE.filter(r => r[6] === S.queueTab), clar = S.queueTab === 'Needs Clarification', R = window.AA_REVIEW || {}, opt = k => reviewerFilterOptions(rows, k);
   let keys = ['customer', 'department', 'category', 'casetype', 'priority', 'source', 'missing'];
-  let n = keys.reduce((a, k) => {
-    let v = s[k];
-    if (Array.isArray(v)) return a + (v.length ? 1 : 0);
-    return a + (v && v !== 'All' ? 1 : 0);
-  }, 0) + (s.due && s.due !== 'All' ? 1 : 0);
+  let n = keys.reduce((a, k) => a + rvfArr(s[k]).length, 0) + (s.due && s.due !== 'All' ? 1 : 0);
 
-  let cust = [...new Set([...(R.cust || []), ...opt('customer')])].sort();
+  let cust = [...new Set([...(R.cust || []), ...opt('customer')])].filter(Boolean).sort();
   let depts = R.depts || opt('department');
   let cats = R.cats || [];
   let types = R.types || [];
@@ -1494,15 +1507,14 @@ reviewerViewFilterBar = function () {
 
   let chips = [];
   keys.forEach(k => {
-    let v = s[k];
-    let val = Array.isArray(v) ? v[0] : v;
-    if (val && val !== 'All') {
-      chips.push([RVF_LABEL[k] + ': ' + val, `setReviewerFilter('${k}', 'All')`]);
-    }
+    rvfArr(s[k]).forEach(val => {
+      chips.push([RVF_LABEL[k] + ': ' + val, `rvfRemoveVal('${k}', '${val.replace(/'/g, "\\'")}')`]);
+    });
   });
-  if (s.due && s.due !== 'All') chips.push(['Due: ' + (s.due === 'Custom' ? rvfDueText(s) : s.due), `setReviewerFilter('due', 'All')`]);
+  if (s.due && s.due !== 'All') chips.push(['Due: ' + (s.due === 'Custom' ? rvfDueText(s) : s.due), `rvfClearKey('due')`]);
 
   let fl = (l, h) => `<div data-aa-style="aa-static-style-85"><label data-aa-style="aa-static-style-86">${l}</label>${h}</div>`;
+  let d = rvfDraft() || s, dn = keys.reduce((a, k) => a + rvfArr(d[k]).length, 0) + (d.due && d.due !== 'All' ? 1 : 0);
 
   let modal = S.rvfModal ? `
     <div onclick="if(event.target===this)rvfModal(false)" data-aa-style="aa-static-style-87">
@@ -1515,17 +1527,17 @@ reviewerViewFilterBar = function () {
           <button type="button" onclick="rvfModal(false)" aria-label="Close" data-aa-style="aa-static-style-92">×</button>
         </div>
         <div data-aa-style="aa-static-style-93">
-          ${fl('Customer', rvfSelect('customer', 'Customer', cust, s))}
-          ${fl('Department', rvfSelect('department', 'Department', depts, s))}
-          ${fl('Category', rvfSelect('category', 'Category', cats, s))}
-          ${fl('Case Type', rvfSelect('casetype', 'Case Type', types, s))}
-          ${fl('Priority', rvfSelect('priority', 'Priority', prios, s))}
-          ${fl('Source', rvfSelect('source', 'Source', SOURCE_FILTERS, s))}
-          ${clar ? fl('Missing Information', rvfSelect('missing', 'Missing Information', opt('missing'), s)) : fl('Due Date', rvfDueSelect(s))}
+          ${fl('Customer', rvfMulti('customer', cust, d, true))}
+          ${fl('Department', rvfMulti('department', depts, d))}
+          ${fl('Category', rvfMulti('category', cats, d))}
+          ${fl('Case Type', rvfMulti('casetype', types, d))}
+          ${fl('Priority', rvfMulti('priority', prios, d))}
+          ${fl('Source', rvfMulti('source', SOURCE_FILTERS, d))}
+          ${clar ? fl('Missing Information', rvfMulti('missing', opt('missing'), d)) : fl('Due Date', rvfDueTrigger(d))}
         </div>
         <div data-aa-style="aa-static-style-94">
-          <button type="button" onclick="resetReviewerFilters()" style="border:0;background:none;color:${n ? '#0871c7' : '#a9b4c2'};font:650 13px Inter,sans-serif;cursor:pointer">Clear all</button>
-          <button type="button" class="btn primary" onclick="rvfModal(false)">Apply Filter</button>
+          <button type="button" onclick="resetReviewerFilters()" style="border:0;background:none;color:${dn ? '#0871c7' : '#a9b4c2'};font:650 13px Inter,sans-serif;cursor:pointer">Clear all</button>
+          <button type="button" class="btn primary" onclick="rvfApply()">Apply Filter</button>
         </div>
       </div>
     </div>` : '';
@@ -1587,17 +1599,17 @@ function ccCreate(){let f=S.cc,miss=!f.customer||!f.subject.trim()||!f.cats.leng
  let c={id,customer:f.customer,caseClass:types,contact:'',email:'',phone:'',customerNo:'',goods:'',pickup:'',delivery:'',priority:f.priority,classification:cats,category:cats,subcategory:cats,requestedDate:req,due:req,status:'Pending',weight:'',subject:f.subject.trim(),body:'',departments:depts,reference:ref,confidence:100,created,attachments:[],note:'',classes:[],domain:'',source:'Manual'};
  CASE_DETAILS[id]=c;CASES.unshift([id,c.customer,c.caseClass,depts,c.priority,req||'—',c.status]);let made=(f.tasks||[]).map(x=>{let tid=nextTaskNumber();let row=[x.title,id,c.customer,x.dept,x.owner,f.priority,req||x.due,x.owner==='Unassigned'?'Unassigned':'Ready',tid,x.cls,'Later'];TASKS.push(row);return tid});c.classes=[...new Set((f.tasks||[]).map(x=>x.cls))];S.activities.unshift([id+' created manually'+(made.length?' · '+made.length+(made.length===1?' Task':' Tasks')+' created':''),actorName(),created]);S.ccOpen=false;S.selectedCase=id;toast(id+' created'+(made.length?' with '+made.length+(made.length===1?' Task':' Tasks'):'')+'. Add order details and contacts from the Case.');openCase(id)}
 const caseCreateBase=cases;
-cases=function(){let html=caseCreateBase();if(S.role==='User')return html;let tpl=document.createElement('template');tpl.innerHTML=html;let act=tpl.content.querySelector('.page-head .actions');if(act)act.insertAdjacentHTML('beforeend','<button class="btn primary" onclick="ccOpen(true)">+ Create Case</button>');if(S.ccOpen){let f=S.cc||(S.cc=CC_EMPTY()),R=window.AA_REVIEW||{},cust=R.cust||[],cats=R.cats||[],types=R.types||[],depts=R.depts||[],e=k=>f.err&&(Array.isArray(f[k])?!f[k].length:!f[k]),
+cases=function(){let html=caseCreateBase();if(S.role==='User')return html;let tpl=document.createElement('template');tpl.innerHTML=html;let act=tpl.content.querySelector('.page-head .actions');if(act)act.insertAdjacentHTML('beforeend','<button class="btn primary" onclick="ccOpen(true)">+ Create Case</button>');if(S.ccOpen){let f=S.cc||(S.cc=CC_EMPTY()),R=window.AA_REVIEW||{},cust=(typeof MASTER_CUSTOMERS!=='undefined'&&MASTER_CUSTOMERS.length?[...new Set(MASTER_CUSTOMERS.map(c=>c.name))]:R.cust||[]),cats=R.cats||[],types=R.types||[],depts=R.depts||[],e=k=>f.err&&(Array.isArray(f[k])?!f[k].length:!f[k]),
  ccLabel=(l,req)=>l+(req?' <span style="color:#c51f2d">*</span>':''),
  ccChoice=(label,key,value,options,req,wide)=>'<label class="'+(wide?'wide':'')+'">'+ccLabel(label,req)+'<select style="'+(e(key)?'border-color:#c51f2d':'')+'" onchange="ccSet(\''+key+'\',this.value)"><option value="">Select '+label.toLowerCase()+'</option>'+options.map(x=>'<option '+(x===value?'selected':'')+'>'+editorText(x)+'</option>').join('')+'</select></label>',
- ccMulti=(label,key,arr,sel,fn,req)=>{let open=S.multiOpen==='cc-'+key,tags=sel.length?sel.map(x=>'<span class="multi-tag">'+editorText(x)+'</span>').join(''):'<span class="multi-placeholder">Select '+label.toLowerCase()+'</span>',menu=open?'<div class="multi-menu" role="listbox" aria-multiselectable="true">'+arr.map(x=>{let on=sel.includes(x);return '<button type="button" class="multi-option '+(on?'selected':'')+'" role="option" aria-selected="'+on+'" onclick="'+fn+'(\''+x+'\')"><span class="multi-check">'+(on?'✓':'')+'</span><span>'+editorText(x)+'</span></button>'}).join('')+'</div>':'';return '<div class="editor-multi"><span class="editor-multi-label">'+ccLabel(label,req)+'</span><div class="multi-anchor"><button type="button" class="multi-trigger" style="'+(e(key)?'border-color:#c51f2d':'')+'" aria-expanded="'+open+'" onclick="S.multiOpen=S.multiOpen===\'cc-'+key+'\'?null:\'cc-'+key+'\';render()"><span class="multi-tags">'+tags+'</span></button>'+menu+'</div><span class="editor-help">Select one or more options</span></div>'};
-let modal='<div onclick="if(event.target===this)ccOpen(false)" data-aa-style="aa-static-style-105"><div role="dialog" aria-label="Create Case" data-aa-style="aa-static-style-106"><div data-aa-style="aa-static-style-107"><div><strong data-aa-style="aa-static-style-108">Create Case</strong><div data-aa-style="aa-static-style-109">Only the essentials are needed now. Order details, contacts, attachments and Tasks can be added after the Case is created.</div></div><button type="button" onclick="ccOpen(false)" aria-label="Close" data-aa-style="aa-static-style-110">×</button></div><div class="editor-grid" data-aa-style="aa-static-style-111">'
+ ccMulti=(label,key,arr,sel,fn,req)=>{let open=S.multiOpen==='cc-'+key,tags=sel.length?sel.map(x=>'<span class="multi-tag">'+editorText(x)+'</span>').join(''):'<span class="multi-placeholder">Select '+label.toLowerCase()+'</span>',menu=open?'<div class="multi-menu" role="listbox" aria-multiselectable="true">'+arr.map(x=>{let on=sel.includes(x);return '<button type="button" class="multi-option '+(on?'selected':'')+'" role="option" aria-selected="'+on+'" onclick="'+fn+'(\''+x+'\')"><span class="multi-check">'+(on?'✓':'')+'</span><span>'+editorText(x)+'</span></button>'}).join('')+'</div>':'';return '<div class="editor-multi"><span class="editor-multi-label">'+ccLabel(label,req)+'</span><div class="multi-anchor"><button type="button" class="multi-trigger" style="'+(e(key)?'border-color:#c51f2d':'')+'" aria-expanded="'+open+'" onclick="S.multiOpen=S.multiOpen===\'cc-'+key+'\'?null:\'cc-'+key+'\';render()"><span class="multi-tags">'+tags+'</span></button>'+menu+'</div></div>'};
+let modal='<div onclick="if(event.target===this)ccOpen(false)" data-aa-style="aa-static-style-105"><div role="dialog" aria-label="Create Case" data-aa-style="aa-static-style-106"><div data-aa-style="aa-static-style-107"><div><strong data-aa-style="aa-static-style-108">Create Case</strong></div><button type="button" onclick="ccOpen(false)" aria-label="Close" data-aa-style="aa-static-style-110">×</button></div><div class="editor-grid" data-aa-style="aa-static-style-111">'
 +ccChoice('Customer','customer',f.customer,cust,1)
 +ccChoice('Priority','priority',f.priority,['High','Medium','Low'],1)
 +'<label class="wide">'+ccLabel('Subject',1)+'<input value="'+editorText(f.subject)+'" oninput="ccSet(\'subject\',this.value)" placeholder="Short description of the request" style="'+(e('subject')?'border-color:#c51f2d':'')+'"></label>'
-+ccMulti('Departments','depts',depts,f.depts,'ccDept',1)
-+ccMulti('Case Type','types',types,f.types,'ccType',1)
 +ccMulti('Category','cats',cats,f.cats,'ccCat',1)
++ccMulti('Case Type','types',types,f.types,'ccType',1)
++ccMulti('Departments','depts',depts,f.depts,'ccDept',1)
 +'<label>'+ccLabel('Requested delivery date')+'<input type="date" value="'+editorText(f.requested)+'" onchange="ccSet(\'requested\',this.value)"></label>'
 +(f.err?'<div class="wide" data-aa-style="aa-static-style-115">Complete the required fields marked *.</div>':'')
 +'</div><div data-aa-style="aa-static-style-116"><span data-aa-style="aa-static-style-51">Source: Manual</span><span data-aa-style="aa-static-style-117"><button class="btn" onclick="ccOpen(false)">Cancel</button><button class="btn primary" onclick="ccCreate()">Create Case</button></span></div></div></div>';tpl.content.appendChild(document.createRange().createContextualFragment(modal))}return tpl.innerHTML};
@@ -1605,26 +1617,30 @@ let modal='<div onclick="if(event.target===this)ccOpen(false)" data-aa-style="aa
 RVF_LABEL.status='Case Status';RVF_LABEL.ack='Acknowledgement';
 const cfStateBase=reviewerFilterState;
 reviewerFilterState=function(){if(S.page==='cases')return S.cfs=S.cfs||{due:'All',dueFrom:'',dueTo:'',customer:[],department:[],category:[],subcategory:[],casetype:[],status:[],priority:[],ack:[]};return cfStateBase()};
-function cfModal(on){S.cfModal=on;S.rvfOpen=null;render()}
+function cfModal(on){rvfModalOpen(on)}
 function cfMatch(c,m){let s=reviewerFilterState(),q=(S.caseQuery||'').toLowerCase(),inn=(k,v)=>{let want=rvfArr(s[k]);if(!want.length)return true;let have=String(v||'').split(',').map(x=>x.trim()).filter(Boolean);return have.some(x=>want.includes(x))};return(!q||(c.join(' ')+' '+m.subject).toLowerCase().includes(q))&&inn('customer',c[1])&&inn('category',m.category)&&inn('casetype',c[2])&&inn('status',c[6])&&inn('priority',c[4])&&inn('ack',m.ack)&&(!rvfArr(s.department).length||String(c[3]).split(',').map(x=>x.trim()).some(x=>rvfArr(s.department).includes(x)))&&(s.due==='All'||reviewerDueMatch(s,c[5]))}
 function caseFilterBar(base,meta,count){let s=reviewerFilterState(),R=window.AA_REVIEW||{},keys=['customer','department','category','casetype','status','priority','ack'],n=keys.reduce((a,k)=>a+rvfArr(s[k]).length,0)+(s.due&&s.due!=='All'?1:0),uq=f=>[...new Set(base.map(f).filter(Boolean))].sort(),cust=uq(c=>c[1]),depts=R.depts||[],cats=R.cats||[],subs=R.subs||[],types=R.types||[],stat=uq(c=>c[6]),prios=['High','Medium','Low'].filter(p=>base.some(c=>c[4]===p)),acks=['Acknowledged','Not sent'];
 RVF_OPTS.customer=cust;RVF_OPTS.department=depts;RVF_OPTS.category=cats;RVF_OPTS.subcategory=subs;RVF_OPTS.casetype=types;RVF_OPTS.status=stat;RVF_OPTS.priority=prios;RVF_OPTS.ack=acks;
-let chips=[];keys.forEach(k=>rvfArr(s[k]).forEach(v=>{let i=(RVF_OPTS[k]||[]).indexOf(v);if(i<0){RVF_OPTS[k]=[...(RVF_OPTS[k]||[]),v];i=RVF_OPTS[k].length-1}chips.push([RVF_LABEL[k]+': '+v,"rvfToggleIdx('"+k+"',"+i+")"])}));
+let chips=[];keys.forEach(k=>rvfArr(s[k]).forEach(v=>{chips.push([RVF_LABEL[k]+': '+v,"rvfRemoveVal('"+k+"','"+v.replace(/'/g,"\\'")+"')"])}));
 if(s.due&&s.due!=='All')chips.push(['Due: '+rvfDueText(s),"rvfClearKey('due')"]);
 let fl=(l,h)=>'<div data-aa-style="aa-static-style-67"><div data-aa-style="aa-static-style-118">'+l+'</div>'+h+'</div>';
-let modal=S.cfModal?'<div onclick="if(event.target===this)cfModal(false)" data-aa-style="aa-static-style-105"><div data-aa-style="aa-static-style-119"><div data-aa-style="aa-static-style-120"><div><strong data-aa-style="aa-static-style-108">Filters</strong><div data-aa-style="aa-static-style-121">Cases</div></div><button type="button" onclick="cfModal(false)" aria-label="Close" data-aa-style="aa-static-style-110">×</button></div><div data-aa-style="aa-static-style-122">'+fl('Customer',rvfMulti('customer',cust,s,true))+fl('Department',rvfMulti('department',depts,s))+fl('Category',rvfMulti('category',cats,s))+fl('Case Type',rvfMulti('casetype',types,s))+fl('Case Status',rvfMulti('status',stat,s))+fl('Priority',rvfMulti('priority',prios,s))+fl('Acknowledgement',rvfMulti('ack',acks,s))+fl('Due Date',rvfDueTrigger(s))+'</div><div data-aa-style="aa-static-style-116"><button type="button" onclick="resetReviewerFilters()" style="border:0;background:none;color:'+(n?'#0871c7':'#a9b4c2')+';font:650 13px Inter,sans-serif;cursor:pointer">Clear all</button><button class="btn primary" data-aa-style="aa-static-style-73" onclick="cfModal(false)">Apply Filter</button></div></div></div>':'';
+let d=rvfDraft()||s,dn=keys.reduce((a,k)=>a+rvfArr(d[k]).length,0)+(d.due&&d.due!=='All'?1:0);
+let modal=S.cfModal?'<div onclick="if(event.target===this)cfModal(false)" data-aa-style="aa-static-style-105"><div data-aa-style="aa-static-style-119"><div data-aa-style="aa-static-style-120"><div><strong data-aa-style="aa-static-style-108">Filters</strong><div data-aa-style="aa-static-style-121">Cases</div></div><button type="button" onclick="cfModal(false)" aria-label="Close" data-aa-style="aa-static-style-110">×</button></div><div data-aa-style="aa-static-style-122">'+fl('Customer',rvfMulti('customer',cust,d,true))+fl('Department',rvfMulti('department',depts,d))+fl('Category',rvfMulti('category',cats,d))+fl('Case Type',rvfMulti('casetype',types,d))+fl('Case Status',rvfMulti('status',stat,d))+fl('Priority',rvfMulti('priority',prios,d))+fl('Acknowledgement',rvfMulti('ack',acks,d))+fl('Due Date',rvfDueTrigger(d))+'</div><div data-aa-style="aa-static-style-116"><button type="button" onclick="resetReviewerFilters()" style="border:0;background:none;color:'+(dn?'#0871c7':'#a9b4c2')+';font:650 13px Inter,sans-serif;cursor:pointer">Clear all</button><button class="btn primary" data-aa-style="aa-static-style-73" onclick="rvfApply()">Apply Filter</button></div></div></div>':'';
 return '<input value="'+editorText(S.caseQuery||'')+'" onchange="setCaseFilter(\'caseQuery\',this.value)" onkeyup="if(event.key===\'Enter\')setCaseFilter(\'caseQuery\',this.value)" placeholder="Search Cases, subjects or customers..."><button type="button" onclick="cfModal(true)" style="display:inline-flex;align-items:center;gap:8px;height:35px;padding:0 13px;border-radius:4px;border:1px solid '+(n?'var(--blue)':'var(--line)')+';background:'+(n?'var(--bluebg)':'#fff')+';color:'+(n?'#0869b6':'var(--ink)')+';font:650 12.5px Inter,sans-serif;cursor:pointer"><span>☰</span>Filters'+(n?'<span data-aa-style="aa-static-style-95">'+n+'</span>':'')+'</button>'+(n?'<button type="button" onclick="resetReviewerFilters()" data-aa-style="aa-static-style-96">Clear all</button>':'')+(chips.length?'<div data-aa-style="aa-static-style-97">'+chips.map(c=>'<button type="button" onclick="'+c[1]+'" data-aa-style="aa-static-style-98">'+editorText(c[0])+'<span>×</span></button>').join('')+'</div>':'')+modal}
 
 const CC_CLS={'Transport':'Transport booking','Packing':'Packing preparation','Freight forwarding':'Customs clearance','Warehouse':'Warehouse storage','Inbound/Outbound':'Warehouse storage','Finance':'Export documentation','Sales':'Transport follow-up'};
 function ccBuildTasks(f){let TSK=(window.AA_REVIEW||{}).tsk||{},tsk=[],seen=new Set();(f.types||[]).forEach(t=>(TSK[t]||[]).forEach(x=>{if(!seen.has(x[0])){seen.add(x[0]);tsk.push(x)}}));let due=(()=>{let m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(f.requested||'');return m?m[3]+'/'+m[2]+'/'+m[1]:'16/10/2026'})(),out=tsk.filter(x=>f.depts.includes(x[1])).map(x=>({title:x[0],dept:x[1],owner:x[2],due,cls:CC_CLS[x[1]]||'Transport booking'}));f.depts.forEach(d=>{if(!out.some(x=>x.dept===d))out.push({title:'Coordinate '+d+' work for '+f.cats.join(', '),dept:d,owner:'Unassigned',due,cls:CC_CLS[d]||'Transport booking'})});return out}
 function ccReview(){let f=S.cc,miss=!f.customer||!f.subject.trim()||!f.cats.length||!f.types.length||!f.depts.length;if(miss){f.err=true;render();return}f.tasks=ccBuildTasks(f);f.step='review';render()}
 function ccBack(){S.cc.step='form';render()}
+function ccAssignees(x){let names=USERS.filter(u=>u.role==='User'&&u.department===x.dept).map(u=>u.name);if(!names.length)names=USERS.filter(u=>u.role==='User').map(u=>u.name);if(x.owner&&x.owner!=='Unassigned'&&!names.includes(x.owner))names.unshift(x.owner);return ['Unassigned',...names]}
+function ccAssign(i,v){S.cc.tasks[i].owner=v;render()}
+if(!document.getElementById('cc-align-style'))document.head.insertAdjacentHTML('beforeend','<style id="cc-align-style">[aria-label="Create Case"] .editor-grid>label>select,[aria-label="Create Case"] .editor-grid>label>.ds-combo{display:block;margin:0!important;position:relative;top:0;height:34px;width:100%;box-sizing:border-box}</style>');
 function ccDrop(i){S.cc.tasks.splice(i,1);render()}
 const caseCreateReviewBase=cases;
 cases=function(){let html=caseCreateReviewBase();if(!S.ccOpen||!S.cc)return html;let tpl=document.createElement('template');tpl.innerHTML=html;let dlg=tpl.content.querySelector('[aria-label="Create Case"]');if(!dlg)return html;
 if(S.cc.step!=='review'){tpl.innerHTML=html.replace('onclick="ccCreate()">Create Case</button>','onclick="ccReview()">Review Tasks ›</button>');return tpl.innerHTML}
-let f=S.cc,n=f.tasks.length,hd='font:700 11px Inter,sans-serif;text-transform:uppercase;letter-spacing:.06em;color:#6b778a',row=(x,i)=>'<div data-aa-style="aa-static-style-123"><div data-aa-style="aa-static-style-67"><strong data-aa-style="aa-static-style-108">'+editorText(x.title)+'</strong><div class="sub">Due '+x.due+'</div></div><span>'+editorText(x.dept)+'</span><span style="font:12.5px Inter,sans-serif;color:'+(x.owner==='Unassigned'?'#6b778a':'#14233a')+'">'+(x.owner==='Unassigned'?'Unassigned':editorText(x.owner))+'</span><button type="button" onclick="ccDrop('+i+')" title="Remove Task" aria-label="Remove Task" data-aa-style="aa-static-style-124" onmouseover="this.style.color=\'#c51f2d\'" onmouseout="this.style.color=\'#8a96a8\'">×</button></div>';
-let modal='<div onclick="if(event.target===this)ccOpen(false)" data-aa-style="aa-static-style-105"><div role="dialog" aria-label="Create Case" data-aa-style="aa-static-style-125"><div data-aa-style="aa-static-style-107"><div><strong data-aa-style="aa-static-style-108">Review Tasks</strong><div data-aa-style="aa-static-style-109">'+(n?n+(n===1?' Task':' Tasks'):'No Tasks')+' will be created with this Case. Remove any you do not need.</div></div><button type="button" onclick="ccOpen(false)" aria-label="Close" data-aa-style="aa-static-style-110">×</button></div><div data-aa-style="aa-static-style-126"><span><b>'+editorText(f.customer)+'</b></span><span>'+editorText(f.subject)+'</span><span>'+editorText(f.cats.join(', '))+' · '+editorText(f.types.join(', '))+'</span><span>'+editorText(f.priority)+' priority</span></div><div data-aa-style="aa-static-style-127"><span style="'+hd+'">Task</span><span style="'+hd+'">Department</span><span style="'+hd+'">Owner</span><span></span></div><div data-aa-style="aa-static-style-128">'+(n?f.tasks.map(row).join(''):'<div data-aa-style="aa-static-style-129">No Tasks selected. The Case will be created empty and Tasks can be added later.</div>')+'</div><div data-aa-style="aa-static-style-116"><button class="btn" data-aa-style="aa-static-style-73" onclick="ccBack()">‹ Back</button><span data-aa-style="aa-static-style-117"><button class="btn" onclick="ccOpen(false)">Cancel</button><button class="btn primary" data-aa-style="aa-static-style-73" onclick="ccCreate()">Approve &amp; Create Case</button></span></div></div></div>';
+let f=S.cc,n=f.tasks.length,hd='font:700 11px Inter,sans-serif;text-transform:uppercase;letter-spacing:.06em;color:#6b778a',row=(x,i)=>'<div data-aa-style="aa-static-style-123"><div data-aa-style="aa-static-style-67"><strong data-aa-style="aa-static-style-108">'+editorText(x.title)+'</strong><div class="sub">Due '+x.due+'</div></div><span>'+editorText(x.dept)+'</span><select aria-label="Assignee" onchange="ccAssign('+i+',this.value)" style="width:100%;height:32px;border:1px solid var(--line);border-radius:4px;background:#fff;padding:0 8px;font:12.5px Inter,sans-serif;color:'+(x.owner==='Unassigned'?'#6b778a':'#14233a')+'">'+ccAssignees(x).map(n=>'<option '+(n===x.owner?'selected':'')+'>'+editorText(n)+'</option>').join('')+'</select><button type="button" onclick="ccDrop('+i+')" title="Remove Task" aria-label="Remove Task" data-aa-style="aa-static-style-124" onmouseover="this.style.color=\'#c51f2d\'" onmouseout="this.style.color=\'#8a96a8\'">×</button></div>';
+let modal='<div onclick="if(event.target===this)ccOpen(false)" data-aa-style="aa-static-style-105"><div role="dialog" aria-label="Create Case" data-aa-style="aa-static-style-125"><div data-aa-style="aa-static-style-107"><div><strong data-aa-style="aa-static-style-108">Review Tasks</strong><div data-aa-style="aa-static-style-109">'+(n?n+(n===1?' Task':' Tasks'):'No Tasks')+' will be created with this Case. Remove any you do not need.</div></div><button type="button" onclick="ccOpen(false)" aria-label="Close" data-aa-style="aa-static-style-110">×</button></div><div data-aa-style="aa-static-style-126"><span><b>'+editorText(f.subject)+'</b></span></div><div data-aa-style="aa-static-style-127"><span style="'+hd+'">Task</span><span style="'+hd+'">Department</span><span style="'+hd+'">Assignee</span><span></span></div><div data-aa-style="aa-static-style-128">'+(n?f.tasks.map(row).join(''):'<div data-aa-style="aa-static-style-129">No Tasks selected. The Case will be created empty and Tasks can be added later.</div>')+'</div><div data-aa-style="aa-static-style-116"><button class="btn" data-aa-style="aa-static-style-73" onclick="ccBack()">‹ Back</button><span data-aa-style="aa-static-style-117"><button class="btn" onclick="ccOpen(false)">Cancel</button><button class="btn primary" data-aa-style="aa-static-style-73" onclick="ccCreate()">Approve &amp; Create Case</button></span></div></div></div>';
 dlg.parentElement.remove();tpl.content.appendChild(document.createRange().createContextualFragment(modal));return tpl.innerHTML};
 
 /* --- Task drawer refinements: drop Task Type & Assignment section, add Assignee avatar, reverse "Blocking" visibility --- */
@@ -2265,7 +2281,7 @@ const extraFieldsOrderTabBase=orderTabV2;orderTabV2=function(){
   let section=template.content.querySelector('.order-other-details');if(!section)return template.innerHTML;
   let c=selectedCaseData(),list=orderExtras(c),inp='box-sizing:border-box;width:100%;border:1px solid #c9d5e1;border-radius:4px;padding:8px 10px;font:inherit;background:#f4f8fc';
   let rows=list.map((x,i)=>'<div data-aa-style="aa-static-style-202"><input id="order-extra-k-'+i+'" value="'+editorText(x.k)+'" placeholder="Label" oninput="setOrderExtra('+i+',\'k\',this.value)" style="'+inp+';font-weight:650"><input value="'+editorText(x.v)+'" placeholder="Value" oninput="setOrderExtra('+i+',\'v\',this.value)" style="'+inp+'"><button type="button" aria-label="Remove field" title="Remove field" onclick="removeOrderExtra('+i+')" data-aa-style="aa-static-style-203">✕</button></div>').join('');
-  section.innerHTML='<div class="order-card-head"><h3>7. Additional Details Found</h3><button class="order-other-add" type="button" title="Add field" aria-label="Add field" onclick="addOrderExtra()">+</button></div><div class="order-card-body"><div class="sub" data-aa-style="aa-static-style-204">Details found in the email and attachments that are not predefined Order fields. Use + to add a field with your own label and value.</div>'+(rows||'<div class="sub">No additional details found outside the predefined Order fields.</div>')+'</div>';
+  section.innerHTML='<div class="order-card-head"><h3>8. Additional Details Found</h3><button class="order-other-add" type="button" title="Add field" aria-label="Add field" onclick="addOrderExtra()">+</button></div><div class="order-card-body"><div class="sub" data-aa-style="aa-static-style-204">Details found in the email and attachments that are not predefined Order fields. Use + to add a field with your own label and value.</div>'+(rows||'<div class="sub">No additional details found outside the predefined Order fields.</div>')+'</div>';
   return template.innerHTML;
 };
 
@@ -2277,18 +2293,61 @@ const goodsDimensionColumnsOrderTab=orderTabV2;orderTabV2=function(){
   let table=template.content.querySelector('.compact-order-table');if(!table)return template.innerHTML;
   let c=selectedCaseData(),edits=S.orderEdits[c.id],text=(i,k,value)=>`<input class="order-inline-input" type="text" value="${editorText(value)}" onchange="setInlineOrderItem(${i},${k},this.value)">`,
     rows=goodsRowsFor(c).map((r,i)=>{let v=r.slice(0,7);(edits?.items?.[i]||[]).forEach((x,k)=>{if(x!=null&&k<7)v[k]=x});return v});
-  let body=rows.map((v,i)=>{let dims=parseGoodsDims(v[5]);return `<tr><td><span class="order-row-number">${String(i+1).padStart(2,'0')}</span></td><td>${inlineGoodsControl(i,1,v[1],'Qty')}</td><td>${text(i,2,v[2])}</td><td>${text(i,3,v[3])}</td><td>${inlineGoodsControl(i,4,v[4],'Weight')}</td><td><input class="order-inline-input" type="text" value="${editorText(dims[0])}" aria-label="Length" onchange="setInlineOrderDimension(${i},0,this.value)"></td><td><input class="order-inline-input" type="text" value="${editorText(dims[1])}" aria-label="Width" onchange="setInlineOrderDimension(${i},1,this.value)"></td><td><input class="order-inline-input" type="text" value="${editorText(dims[2])}" aria-label="Height" onchange="setInlineOrderDimension(${i},2,this.value)"></td><td>${text(i,6,v[6])}</td><td>${confidenceBadge(i?91:93)}</td><td style="white-space:nowrap;text-align:right"><button class="link" title="Remove row" onclick="removeGoodsRow('${c.id}',${i})" style="font-size:14px">✕</button></td></tr>`}).join('');
-  let rebuilt=document.createElement('template');rebuilt.innerHTML=`<table class="compact-order-table"><thead><tr><th>Item</th><th>Qty</th><th>Package Type</th><th>Goods Description</th><th>Weight (kg)</th><th>L (m)</th><th>W (m)</th><th>H (m)</th><th>Package No.</th><th>AI Confidence</th><th></th></tr></thead><tbody>${body}</tbody></table>`;
-  table.replaceWith(rebuilt.content.firstElementChild);return template.innerHTML};
+  let body=rows.map((v,i)=>{let dims=parseGoodsDims(v[5]);return `<tr><td><span class="order-row-number">${String(i+1).padStart(2,'0')}</span></td><td>${inlineGoodsControl(i,1,v[1],'Qty')}</td><td>${text(i,2,v[2])}</td><td>${text(i,3,v[3])}</td><td>${inlineGoodsControl(i,4,v[4],'Weight')}</td><td><input class="order-inline-input" type="text" value="${editorText(dims[0])}" aria-label="Length" onchange="setInlineOrderDimension(${i},0,this.value)"></td><td><input class="order-inline-input" type="text" value="${editorText(dims[1])}" aria-label="Width" onchange="setInlineOrderDimension(${i},1,this.value)"></td><td><input class="order-inline-input" type="text" value="${editorText(dims[2])}" aria-label="Height" onchange="setInlineOrderDimension(${i},2,this.value)"></td><td>${text(i,6,v[6])}</td><td><input class="order-inline-input" type="text" value="${editorText(((c.goodsDetail&&c.goodsDetail[i])||{}).marking||'')}" aria-label="Goods Marking" onchange="setCaseGoodsField('${c.id}',${i},'marking',this.value)"></td><td><input class="order-inline-input" type="text" value="${editorText(((c.goodsDetail&&c.goodsDetail[i])||{}).vol||'')}" aria-label="Volume" onchange="setCaseGoodsField('${c.id}',${i},'vol',this.value)"></td><td><input class="order-inline-input" type="text" value="${editorText(((c.goodsDetail&&c.goodsDetail[i])||{}).pallet||'')}" aria-label="Pallet Spaces" onchange="setCaseGoodsField('${c.id}',${i},'pallet',this.value)"></td><td>${confidenceBadge(i?91:93)}</td><td style="white-space:nowrap;text-align:right"><button class="link" title="Remove row" onclick="removeGoodsRow('${c.id}',${i})" style="font-size:14px">✕</button></td></tr>`}).join('');
+  let rebuilt=document.createElement('template');rebuilt.innerHTML=`<table class="compact-order-table"><thead><tr><th>Item</th><th>Qty</th><th>Package Type</th><th>Goods Description</th><th>Weight (kg)</th><th>L (m)</th><th>W (m)</th><th>H (m)</th><th>Package No.</th><th>Goods Marking</th><th>Volume (m³)</th><th>Pallet Spaces</th><th>AI Confidence</th><th></th></tr></thead><tbody>${body}</tbody></table>`;
+  // The goods table scrolls, both ways, inside a fixed height, so long lists and wide columns stay reachable.
+  const scroll=document.createElement('div');scroll.style.cssText='overflow:auto;max-height:360px';scroll.appendChild(rebuilt.content.firstElementChild);table.replaceWith(scroll);return template.innerHTML};
+// Saves a value typed in the Goods / Colli table on the Order tab to the case's goods row.
+function setCaseGoodsField(caseId,i,key,value){const c=CASE_DETAILS[caseId];if(!c)return;c.goodsDetail=c.goodsDetail||[];c.goodsDetail[i]=c.goodsDetail[i]||{};c.goodsDetail[i][key]=String(value).trim();render()}
 
-const CUSTOMER_MASTER=[{no:'1000123',code:'HEN-0042',name:'Hitachi Energy',legal:'Hitachi Energy AB',city:'Ludvika, Sweden'},{no:'1000456',code:'ABB-0117',name:'ABB Robotics',legal:'ABB Robotics AB',city:'Västerås, Sweden'},{no:'1000789',code:'SCA-0301',name:'Scania CV AB',legal:'Scania CV AB',city:'Södertälje, Sweden'}];
-function customerMasterLookup(no){return CUSTOMER_MASTER.find(x=>x.no===String(no||'').trim())||null}
+const CUSTOMER_MASTER = (typeof MASTER_CUSTOMERS !== 'undefined' ? MASTER_CUSTOMERS : []).map(x => ({
+  no: x.customerNumber || x.id,
+  code: x.customerCode || '',
+  name: x.name,
+  legal: x.name,
+  city: x.city || ''
+}));
+function customerMasterLookup(q){
+  if (!q) return null;
+  const needle = String(q).trim().toLowerCase();
+  const list = typeof MASTER_CUSTOMERS !== 'undefined' && MASTER_CUSTOMERS.length ? MASTER_CUSTOMERS : CUSTOMER_MASTER;
+  const found = list.find(x => 
+    String(x.customerNumber || x.no || '').trim().toLowerCase() === needle ||
+    String(x.customerCode || x.code || '').trim().toLowerCase() === needle ||
+    String(x.id || '').trim().toLowerCase() === needle ||
+    String(x.name || '').trim().toLowerCase() === needle
+  );
+  if (found) {
+    return {
+      no: found.customerNumber || found.no || found.id,
+      code: found.customerCode || found.code || '',
+      name: found.name,
+      legal: found.name,
+      city: found.city || ''
+    };
+  }
+  return null;
+}
 function orderRowIndexByLabel(label){return [...document.querySelectorAll('.order-line,.order-metric')].findIndex(row=>row.querySelector(':scope > span')?.textContent.trim()===label)}
 function setOrderCustomerNumber(index,value){let caseId=S.selectedCase,rec=orderEditRecord(caseId),no=String(value||'').trim(),found=customerMasterLookup(no);rec.fields[index]={index,value:no};let customerIndex=orderRowIndexByLabel('Customer');if(found&&customerIndex>=0)rec.fields[customerIndex]={index:customerIndex,value:found.name};commitOrderEdit(caseId,found?'Customer matched to '+found.name:'Customer number updated')}
 function setPickupParts(index,date,time){let caseId=S.selectedCase,rec=orderEditRecord(caseId),d=/^(\d{4})-(\d{2})-(\d{2})$/.exec(date||''),t=/^([01]\d|2[0-3]):([0-5]\d)$/.exec(time||'');if(!d){toast('Select a pickup date');render();return}if(!t){toast('Enter the pickup time in 24-hour format, for example 08:00');render();return}rec.fields[index]={index,value:`${d[3]}/${d[2]}/${d[1]}, ${t[0]}`};commitOrderEdit(caseId,'Pickup date/time updated')}
-function openCustomerPicker(input){input.parentElement.querySelector('.customer-picker-menu').hidden=false}
-function closeCustomerPicker(input){input.parentElement.querySelector('.customer-picker-menu').hidden=true}
-function filterCustomerPicker(input){let q=input.value.trim().toLowerCase(),menu=input.parentElement.querySelector('.customer-picker-menu');menu.querySelectorAll('.customer-picker-option').forEach(o=>{o.hidden=!!q&&!o.textContent.toLowerCase().includes(q)});menu.hidden=false}
+function openCustomerPicker(input){filterCustomerPicker(input);input.parentElement.querySelector('.customer-picker-menu').hidden=false}
+function closeCustomerPicker(input){setTimeout(()=>{let m=input.parentElement?.querySelector('.customer-picker-menu');if(m)m.hidden=true},200)}
+function filterCustomerPicker(input){
+  let q=input.value.trim().toLowerCase(),menu=input.parentElement.querySelector('.customer-picker-menu');
+  if(!menu)return;
+  const list = typeof MASTER_CUSTOMERS !== 'undefined' && MASTER_CUSTOMERS.length ? MASTER_CUSTOMERS : CUSTOMER_MASTER;
+  const matches = q
+    ? list.filter(x => ((x.name || '') + ' ' + (x.customerCode || x.code || '') + ' ' + (x.customerNumber || x.no || '')).toLowerCase().includes(q))
+    : list;
+  const idx = menu.dataset.index || 0;
+  menu.innerHTML = matches.slice(0, 40).map(x => {
+    const val = x.customerNumber || x.no || x.customerCode || x.code || x.id;
+    const code = x.customerCode || x.code || '';
+    return `<button type="button" class="customer-picker-option" onmousedown="event.preventDefault()" onclick="setOrderCustomerNumber(${idx},'${val}')"><strong>${code ? editorText(code) + ' · ' : ''}${editorText(val)}</strong><span>${editorText(x.name)}</span></button>`;
+  }).join('') || '<div style="padding:8px 12px;color:var(--muted);font-size:12px">No customer matches</div>';
+  menu.hidden = false;
+}
 const orderPageSimplifiedOrderTab=orderTabV2;orderTabV2=function(){
   let template=document.createElement('template');template.innerHTML=orderPageSimplifiedOrderTab();
   const removedLabel=/^(Invoice Marking|Region|Geographic \/ Price Zone|Distance|Estimated Driving Time|Temperature Requirement|Chargeable Weight|Length|Width|Height)\b/;
@@ -2300,7 +2359,7 @@ const orderPageSimplifiedOrderTab=orderTabV2;orderTabV2=function(){
     if(label==='Customer No.'&&control){
       let current=control.querySelector('input')?.value??'';
       let pill=row.querySelector('.ai-field-confidence');if(pill){pill.innerHTML='';pill.style.visibility='hidden'}
-      control.innerHTML=`<div class="customer-picker"><input class="order-inline-input" type="text" inputmode="numeric" autocomplete="off" value="${editorText(current)}" aria-label="Customer number" placeholder="Search customer number" oninput="filterCustomerPicker(this)" onfocus="openCustomerPicker(this)" onblur="closeCustomerPicker(this)" onchange="setOrderCustomerNumber(${index},this.value)"><div class="customer-picker-menu" hidden>${CUSTOMER_MASTER.map(x=>`<button type="button" class="customer-picker-option" onmousedown="event.preventDefault()" onclick="setOrderCustomerNumber(${index},'${x.no}')"><strong>${x.no}</strong><span>${editorText(x.name)}</span></button>`).join('')}</div></div>`;
+      control.innerHTML=`<div class="customer-picker"><input class="order-inline-input" type="text" autocomplete="off" value="${editorText(current)}" aria-label="Customer number" placeholder="Search customer number or code" oninput="filterCustomerPicker(this)" onfocus="openCustomerPicker(this)" onblur="closeCustomerPicker(this)" onchange="setOrderCustomerNumber(${index},this.value)"><div class="customer-picker-menu" data-index="${index}" hidden></div></div>`;
     }
     if(/^Pickup Date \/ Time/.test(label)&&control){
       let [dv='',tv='']=(control.querySelector('input')?.value||'').split('T'),time=tv.slice(0,5)||'08:00';
@@ -3476,7 +3535,7 @@ userDeptTasksAvailable = function () {
 
 /* === Home dashboard filters: Reviewer, Department Head and Department User === */
 (function () {
-  document.head.insertAdjacentHTML('beforeend', `<style>.home-filters{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:0 0 16px;padding:12px 14px;background:#fff;border:1px solid var(--line);border-radius:8px;box-shadow:var(--shadow)}.home-filters select{height:34px;border:1px solid #c9d5e1;border-radius:4px;padding:0 9px;font:600 12.5px Inter,Segoe UI,Arial,sans-serif;background:#f4f8fc;color:#14233a;min-width:130px}.home-filters .link{font:700 12.5px Inter,sans-serif;margin-left:auto}.home-range-group{position:relative;display:inline-flex;align-items:stretch;height:36px;min-width:260px;border:1px solid var(--line);border-radius:6px;background:#fff;overflow:visible}.home-range-text{display:flex;align-items:center;flex:1;padding:0 12px;font:600 13px Inter,Segoe UI,Arial,sans-serif;color:var(--ink);white-space:nowrap}.home-range-btn{flex:0 0 40px;display:grid;place-items:center;border:0;border-radius:0 5px 5px 0;background:var(--blue);color:#fff;cursor:pointer}.home-range-btn:hover{background:var(--navy)}.home-range-pop{position:absolute;top:calc(100% + 6px);left:0;z-index:60;display:grid;gap:10px;min-width:300px;padding:12px;background:#fff;border:1px solid var(--line);border-radius:8px;box-shadow:0 10px 28px rgba(6,28,49,.16)}.home-range-field{display:flex;justify-content:space-between;align-items:center;gap:10px;font:650 12px Inter,Segoe UI,Arial,sans-serif;color:var(--muted);white-space:nowrap}.home-range-field input[type=date]{height:32px;border:1px solid var(--line);border-radius:4px;padding:0 8px;font:600 12.5px Inter,Segoe UI,Arial,sans-serif;background:#fff;color:var(--ink)}.home-range-actions{display:flex;justify-content:flex-end;gap:8px}.home-range-actions .btn{height:32px;min-height:32px;padding:0 14px;font-size:12.5px}@media(max-width:640px){.home-filters{align-items:stretch}.home-filters select{min-width:0;flex:1 1 150px}.home-range-group{flex:1 1 100%}.home-filters .link{margin-left:0}}</style>`);
+  document.head.insertAdjacentHTML('beforeend', `<style>.home-filters{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:0 0 16px;padding:12px 14px;background:#fff;border:1px solid var(--line);border-radius:8px;box-shadow:var(--shadow)}.home-filters select{height:34px;border:1px solid #c9d5e1;border-radius:4px;padding:0 9px;font:600 12.5px Inter,Segoe UI,Arial,sans-serif;background:#f4f8fc;color:#14233a;min-width:130px;box-sizing:border-box}.home-filters .ds-combo-input{height:34px;border:1px solid #c9d5e1;border-radius:4px;padding:0 44px 0 9px;font:600 12.5px Inter,Segoe UI,Arial,sans-serif;background:#f4f8fc;color:#14233a;min-width:130px;box-sizing:border-box}.home-filters .ds-combo{min-width:130px;position:relative;display:inline-block;vertical-align:middle}.home-filters .ds-combo[data-type="customer"]{min-width:190px;max-width:270px}.home-filters .ds-combo-clear{position:absolute;right:25px;top:50%;transform:translateY(-50%);display:flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;border:0;background:transparent;color:#94a3b8;cursor:pointer;padding:0;line-height:1;z-index:3}.home-filters .ds-combo-clear:hover{background:#e2e8f0;color:#1e293b}.home-filters .ds-combo-clear[hidden]{display:none!important}.home-filters .link{font:700 12.5px Inter,sans-serif;margin-left:auto}.home-range-group{position:relative;display:inline-flex;align-items:stretch;height:36px;min-width:260px;border:1px solid var(--line);border-radius:6px;background:#fff;overflow:visible}.home-range-text{display:flex;align-items:center;flex:1;padding:0 12px;font:600 13px Inter,Segoe UI,Arial,sans-serif;color:var(--ink);white-space:nowrap}.home-range-btn{flex:0 0 40px;display:grid;place-items:center;border:0;border-radius:0 5px 5px 0;background:var(--blue);color:#fff;cursor:pointer}.home-range-btn:hover{background:var(--navy)}.home-range-pop{position:absolute;top:calc(100% + 6px);left:0;z-index:60;display:grid;gap:10px;min-width:300px;padding:12px;background:#fff;border:1px solid var(--line);border-radius:8px;box-shadow:0 10px 28px rgba(6,28,49,.16)}.home-range-field{display:flex;justify-content:space-between;align-items:center;gap:10px;font:650 12px Inter,Segoe UI,Arial,sans-serif;color:var(--muted);white-space:nowrap}.home-range-field input[type=date]{height:32px;border:1px solid var(--line);border-radius:4px;padding:0 8px;font:600 12.5px Inter,Segoe UI,Arial,sans-serif;background:#fff;color:var(--ink)}.home-range-actions{display:flex;justify-content:flex-end;gap:8px}.home-range-actions .btn{height:32px;min-height:32px;padding:0 14px;font-size:12.5px}@media(max-width:640px){.home-filters{align-items:stretch}.home-filters select,.home-filters .ds-combo{min-width:0;flex:1 1 150px}.home-range-group{flex:1 1 100%}.home-filters .link{margin-left:0}}</style>`);
 
   const DATE_RANGES = ['All', 'Today', 'This Week', 'This Month', 'Custom'];
   // f is a Home filter object. For Custom, dateFrom and dateTo are the applied yyyy-mm-dd bounds, inclusive.
@@ -3787,47 +3846,340 @@ userDeptTasksAvailable = function () {
 
 render();
 
-function isCustomerSelect(sel){
-  if(sel.closest('.filters,.home-filters,.case-filter-row,.task-command,.review-filter'))return false;
-  if(/^All /.test(sel.options[0]?.text||'')||/filter/i.test(sel.getAttribute('aria-label')||''))return false;
-  const aria=(sel.getAttribute('aria-label')||'').trim();
-  const before=(sel.previousSibling?.textContent||'').replace(/\*/g,'').trim();
-  const rowLabel=(sel.closest('.order-line,.ai-data-row')?.querySelector(':scope > span')?.textContent||'').trim();
-  const first=sel.options[0]?.text||'';
-  return /^Customer$/i.test(aria)||/^Customer$/i.test(before)||/^Customer$/i.test(rowLabel)||/Select customer|All Customers/i.test(first);
+function isCustomerSelect(sel) {
+  if (!sel || sel.dataset.noCombo) return false;
+  const aria = (sel.getAttribute('aria-label') || '').toLowerCase();
+  const cls = (sel.className || '').toLowerCase();
+  const first = (sel.options[0]?.text || '').toLowerCase();
+  const onchange = (sel.getAttribute('onchange') || '').toLowerCase();
+  const labelParent = (sel.closest('label')?.textContent || '').toLowerCase();
+  const rowLabel = (sel.closest('.order-line, .ai-data-row')?.querySelector(':scope > span')?.textContent || '').toLowerCase();
+  const prevSibling = (sel.previousElementSibling?.textContent || sel.previousSibling?.textContent || '').toLowerCase();
+  return aria.includes('customer') ||
+         cls.includes('customer') ||
+         first.includes('customer') ||
+         labelParent.includes('customer') ||
+         rowLabel.includes('customer') ||
+         prevSibling.includes('customer') ||
+         onchange.includes('customer') ||
+         onchange.includes("'co'");
 }
-function enhanceCustomerSelects(root){
-  root.querySelectorAll('select').forEach(sel=>{
-    if(sel.closest('.ds-combo')||!isCustomerSelect(sel))return;
-    const wrap=document.createElement('div');wrap.className='ds-combo';
-    sel.parentNode.insertBefore(wrap,sel);wrap.appendChild(sel);sel.hidden=true;
-    const input=document.createElement('input');input.type='text';input.autocomplete='off';input.disabled=sel.disabled;
-    input.className=(sel.className||'')+' ds-combo-input';
-    input.setAttribute('aria-label',sel.getAttribute('aria-label')||'Customer');
-    const selected=sel.options[sel.selectedIndex];
-    input.value=selected&&selected.value?selected.text:'';
-    input.placeholder=sel.options[0]&&!sel.options[0].value?sel.options[0].text:'Search customer';
-    const menu=document.createElement('div');menu.className='ds-combo-menu';menu.hidden=true;
-    Array.from(sel.options).forEach(o=>{
-      const b=document.createElement('button');b.type='button';b.className='ds-combo-option';b.textContent=o.text;b.dataset.value=o.value;
-      b.addEventListener('mousedown',e=>e.preventDefault());
-      b.addEventListener('click',()=>pick(o.value,o.text));
-      menu.appendChild(b);
-    });
-    function pick(value,text){input.value=text;menu.hidden=true;sel.value=value;sel.dispatchEvent(new Event('change',{bubbles:true}))}
-    function filter(){const q=input.value.trim().toLowerCase();menu.querySelectorAll('.ds-combo-option').forEach(b=>{b.hidden=!!q&&!b.textContent.toLowerCase().includes(q)})}
-    input.addEventListener('focus',()=>{filter();menu.hidden=false;input.select()});
-    input.addEventListener('input',()=>{filter();menu.hidden=false});
-    input.addEventListener('keydown',e=>{
-      if(e.key==='Enter'){e.preventDefault();const first=[...menu.querySelectorAll('.ds-combo-option')].find(b=>!b.hidden);if(first)pick(first.dataset.value,first.textContent)}
-      if(e.key==='Escape'){menu.hidden=true;input.blur()}
-    });
-    input.addEventListener('blur',()=>{menu.hidden=true;const cur=sel.options[sel.selectedIndex];input.value=cur&&cur.value?cur.text:''});
-    wrap.append(input,menu);
+
+function shouldEnhanceSelect(sel) {
+  if (!sel || sel.hidden || sel.multiple) return false;
+  if (sel.dataset.noCombo) return false;
+  if (sel.closest('.ds-combo, .case-pager-size, .pager-size, [data-no-combo]')) return false;
+  if (sel.id === 'aa-lang') return false;
+  if (sel.getAttribute('aria-label') === 'Rows per page') return false;
+  return isCustomerSelect(sel);
+}
+
+function enhanceSelect(sel) {
+  if (!shouldEnhanceSelect(sel)) return;
+
+  const isCust = isCustomerSelect(sel);
+  const wrap = document.createElement('div');
+  wrap.className = 'ds-combo';
+  if (isCust) wrap.dataset.type = 'customer';
+  if (sel.closest('.home-filters')) wrap.classList.add('home-filter-combo');
+
+  if (sel.style.width) wrap.style.width = sel.style.width;
+  if (sel.style.minWidth) wrap.style.minWidth = sel.style.minWidth;
+  if (sel.style.flex) wrap.style.flex = sel.style.flex;
+
+  sel.parentNode.insertBefore(wrap, sel);
+  wrap.appendChild(sel);
+  sel.hidden = true;
+  sel.setAttribute('tabindex', '-1');
+  sel.setAttribute('aria-hidden', 'true');
+  sel.style.setProperty('display', 'none', 'important');
+  sel.style.setProperty('visibility', 'hidden', 'important');
+  sel.style.setProperty('position', 'absolute', 'important');
+  sel.style.setProperty('width', '0', 'important');
+  sel.style.setProperty('height', '0', 'important');
+  sel.style.setProperty('padding', '0', 'important');
+  sel.style.setProperty('margin', '0', 'important');
+  sel.style.setProperty('border', '0', 'important');
+  sel.style.setProperty('opacity', '0', 'important');
+  sel.style.setProperty('pointer-events', 'none', 'important');
+
+  const input = document.createElement('input');
+  input.type = 'text';
+  input.autocomplete = 'off';
+  input.spellcheck = false;
+  input.readOnly = true;
+  input.disabled = sel.disabled;
+  input.className = 'ds-combo-input';
+  if (sel.closest('.home-filters')) input.classList.add('home-filter-input');
+  if (sel.id) input.dataset.forSelect = sel.id;
+  input.setAttribute('aria-label', sel.getAttribute('aria-label') || (isCust ? 'Customer' : 'Select option'));
+  input.setAttribute('aria-expanded', 'false');
+  input.setAttribute('aria-haspopup', 'listbox');
+
+  function getClearOption() {
+    const opts = Array.from(sel.options);
+    return opts.find(o => o.value === '' || o.value === 'All') || opts[0];
+  }
+
+  function updateClearVisibility() {
+    const clearOpt = getClearOption();
+    const hasSelectedValue = sel.value && clearOpt && sel.value !== clearOpt.value;
+    clearBtn.hidden = !hasSelectedValue;
+    wrap.classList.toggle('has-value', Boolean(hasSelectedValue));
+  }
+
+  function syncValue() {
+    const cur = sel.options[sel.selectedIndex];
+    input.value = cur && cur.value ? cur.text : (sel.options[0]?.value ? '' : (sel.options[0]?.text || ''));
+    input.title = input.value;
+    updateClearVisibility();
+  }
+
+  const clearBtn = document.createElement('button');
+  clearBtn.type = 'button';
+  clearBtn.className = 'ds-combo-clear';
+  clearBtn.setAttribute('aria-label', 'Clear selection');
+  clearBtn.title = 'Clear selection';
+  clearBtn.innerHTML = '<svg viewBox="0 0 16 16" width="10" height="10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4l8 8M12 4l-8 8"/></svg>';
+  clearBtn.hidden = true;
+
+  clearBtn.addEventListener('pointerdown', e => {
+    e.preventDefault();
+    e.stopPropagation();
   });
+  clearBtn.addEventListener('click', e => {
+    e.preventDefault();
+    e.stopPropagation();
+    const clearOpt = getClearOption();
+    if (clearOpt) {
+      pick(clearOpt.value, clearOpt.text);
+    }
+    setOpen(false);
+  });
+
+  syncValue();
+
+  const arrow = document.createElement('span');
+  arrow.className = 'ds-combo-arrow';
+  arrow.setAttribute('aria-hidden', 'true');
+  arrow.innerHTML = '<svg viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 6l4.5 4.5 4.5-4.5"/></svg>';
+
+  const menu = document.createElement('div');
+  menu.className = 'ds-combo-menu';
+  menu.setAttribute('role', 'listbox');
+  menu.hidden = true;
+
+  let highlightedIndex = -1;
+
+  function setOpen(open) {
+    if (open && sel.disabled) return;
+    menu.hidden = !open;
+    wrap.classList.toggle('open', open);
+    input.setAttribute('aria-expanded', String(open));
+    if (open) {
+      input.readOnly = false;
+      input.style.cursor = 'text';
+      populateMenu(input.value);
+      input.select();
+      highlightSelectedOption();
+    } else {
+      input.readOnly = true;
+      input.style.cursor = 'pointer';
+      highlightedIndex = -1;
+      if (!input.value.trim()) {
+        const clearOpt = getClearOption();
+        if (clearOpt) pick(clearOpt.value, clearOpt.text);
+        else syncValue();
+      } else {
+        syncValue();
+      }
+    }
+  }
+
+  function highlightSelectedOption() {
+    const items = menu.querySelectorAll('.ds-combo-option');
+    items.forEach((btn, idx) => {
+      if (btn.classList.contains('selected')) {
+        highlightedIndex = idx;
+        btn.scrollIntoView({ block: 'nearest' });
+      }
+    });
+  }
+
+  function highlightOption(idx) {
+    const items = Array.from(menu.querySelectorAll('.ds-combo-option'));
+    if (!items.length) return;
+    if (idx < 0) idx = items.length - 1;
+    if (idx >= items.length) idx = 0;
+    highlightedIndex = idx;
+    items.forEach((btn, i) => {
+      btn.classList.toggle('highlighted', i === idx);
+      if (i === idx) btn.scrollIntoView({ block: 'nearest' });
+    });
+  }
+
+  function populateMenu(q) {
+    menu.innerHTML = '';
+    const needle = (q || '').trim().toLowerCase();
+    const opts = Array.from(sel.options);
+    const selectedOption = sel.options[sel.selectedIndex];
+    const isCurrentText = selectedOption && selectedOption.text.toLowerCase() === needle;
+    const filterQuery = isCurrentText ? '' : needle;
+
+    let matches = opts;
+    if (filterQuery) {
+      matches = opts.filter(o => {
+        const text = o.text.toLowerCase();
+        const val = o.value.toLowerCase();
+        if (text.includes(filterQuery) || val.includes(filterQuery)) return true;
+        if (isCust && typeof MASTER_CUSTOMERS !== 'undefined') {
+          const c = MASTER_CUSTOMERS.find(cust => cust.name === o.value || cust.name === o.text || cust.id === o.value);
+          if (c) {
+            if ((c.customerNumber || '').toLowerCase().includes(filterQuery)) return true;
+            if ((c.customerCode || '').toLowerCase().includes(filterQuery)) return true;
+          }
+        }
+        return false;
+      });
+    }
+
+    const slice = matches.slice(0, 60);
+    slice.forEach((o, i) => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'ds-combo-option' + (o.value === sel.value ? ' selected' : '');
+      btn.setAttribute('role', 'option');
+      btn.dataset.value = o.value;
+      btn.textContent = o.text;
+      btn.title = o.text;
+      btn.addEventListener('pointerdown', e => e.preventDefault());
+      btn.addEventListener('click', e => {
+        e.stopPropagation();
+        pick(o.value, o.text);
+      });
+      menu.appendChild(btn);
+    });
+
+    if (!slice.length) {
+      const empty = document.createElement('div');
+      empty.className = 'ds-combo-empty';
+      empty.textContent = isCust ? 'No matching customers' : 'No matching options';
+      menu.appendChild(empty);
+    }
+  }
+
+  function pick(val, text) {
+    input.value = text;
+    setOpen(false);
+    if (sel.value !== val) {
+      sel.value = val;
+      sel.dispatchEvent(new Event('change', { bubbles: true }));
+      if (typeof sel.onchange === 'function') sel.onchange();
+    }
+    updateClearVisibility();
+  }
+
+  wrap.addEventListener('click', e => {
+    if (sel.disabled) return;
+    if (e.target === clearBtn || clearBtn.contains(e.target)) return;
+    if (menu.hidden) {
+      setOpen(true);
+    } else if (e.target === arrow || arrow.contains(e.target)) {
+      setOpen(false);
+    }
+  });
+
+  input.addEventListener('input', () => {
+    if (menu.hidden) setOpen(true);
+    else populateMenu(input.value);
+  });
+
+  input.addEventListener('keydown', e => {
+    if (menu.hidden) {
+      if (e.key === 'ArrowDown' || e.key === 'ArrowUp' || e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        setOpen(true);
+      }
+      return;
+    }
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      highlightOption(highlightedIndex + 1);
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      highlightOption(highlightedIndex - 1);
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      if (!input.value.trim()) {
+        const clearOpt = getClearOption();
+        if (clearOpt) pick(clearOpt.value, clearOpt.text);
+        return;
+      }
+      const items = menu.querySelectorAll('.ds-combo-option');
+      if (highlightedIndex >= 0 && items[highlightedIndex]) {
+        items[highlightedIndex].click();
+      } else if (items.length > 0) {
+        items[0].click();
+      }
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      setOpen(false);
+    }
+  });
+
+  document.addEventListener('pointerdown', e => {
+    if (!menu.hidden && !wrap.contains(e.target)) {
+      if (!input.value.trim()) {
+        const clearOpt = getClearOption();
+        if (clearOpt) pick(clearOpt.value, clearOpt.text);
+      }
+      setOpen(false);
+    }
+  });
+
+  sel.addEventListener('change', syncValue);
+  wrap.append(input, clearBtn, arrow, menu);
 }
-const customerComboRenderBase=render;render=function(){customerComboRenderBase();enhanceCustomerSelects(document.body)};
-enhanceCustomerSelects(document.body);
+
+function enhanceDropdownSelects(root = document.body) {
+  if (!root) return;
+  root.querySelectorAll('select').forEach(enhanceSelect);
+}
+
+window.enhanceDropdownSelects = enhanceDropdownSelects;
+window.enhanceCustomerSelects = enhanceDropdownSelects;
+
+const comboRenderBase = render;
+render = function() {
+  comboRenderBase();
+  enhanceDropdownSelects(document.body);
+};
+enhanceDropdownSelects(document.body);
+
+if (typeof MutationObserver !== 'undefined' && !window.__aaComboObserver) {
+  window.__aaComboObserver = new MutationObserver(mutations => {
+    let needsEnhance = false;
+    for (const m of mutations) {
+      for (const n of m.addedNodes) {
+        if (n.nodeType === 1 && !n.closest?.('.ds-combo')) {
+          if (n.tagName === 'SELECT' || n.querySelector?.('select')) {
+            needsEnhance = true;
+            break;
+          }
+        }
+      }
+      if (needsEnhance) break;
+    }
+    if (needsEnhance) {
+      window.__aaComboObserver.disconnect();
+      try { enhanceDropdownSelects(document.body); }
+      finally {
+        window.__aaComboObserver.observe(document.body, { childList: true, subtree: true });
+      }
+    }
+  });
+  window.__aaComboObserver.observe(document.body, { childList: true, subtree: true });
+}
 
 function imgCard(title,sub,body){return `<section class="card img-card"><div class="img-card-head"><div><h2 class="img-title">${title}</h2><span class="img-sub">${sub}</span></div></div><div class="img-card-body">${body}</div></section>`}
 function imgBarChart(groups,opts){

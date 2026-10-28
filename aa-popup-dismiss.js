@@ -3,7 +3,7 @@
    customer dropdown menus. Runs in the capture phase, so the click that closes a popup still reaches the
    control it landed on. Loaded last. */
 (function () {
-  const INSIDE = '.rvf-wrap, .editor-multi, .menu-wrap, .filter-menu-wrap, .home-range-group, .customer-picker, .ds-combo';
+  const INSIDE = '.rvf-wrap, .ds-multi-wrap, .editor-multi, .menu-wrap, .filter-menu-wrap, .home-range-group, .customer-picker, .ds-combo';
   const STATE_POPUPS = ['rvfOpen', 'multiOpen', 'profileMenu', 'notificationMenu', 'moreFilters', 'homeRangeOpen'];
 
   document.addEventListener('click', event => {

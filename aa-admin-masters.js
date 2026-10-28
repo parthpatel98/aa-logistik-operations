@@ -113,12 +113,13 @@
   AA_ADMIN.forms.customers = {
     noun: 'Customer',
     toggleable: true,
-    blank: () => ({ name: '', customerNumber: '', email: '', phone: '', address: '' }),
+    blank: () => ({ name: '', customerCode: '', customerNumber: '', email: '', phone: '', address: '' }),
     load: id => {
       const c = customerById(id);
-      return c && { name: c.name, customerNumber: c.customerNumber || '', email: c.email || '', phone: c.phone || '', address: c.address || '' };
+      return c && { name: c.name, customerCode: c.customerCode || '', customerNumber: c.customerNumber || '', email: c.email || '', phone: c.phone || '', address: c.address || '' };
     },
     fields: () => [
+      { key: 'customerCode', label: 'Customer Code (Opter)' },
       { key: 'name', label: 'Company' },
       { key: 'customerNumber', label: 'Customer Number' },
       { key: 'email', label: 'Email', type: 'email' },
@@ -128,26 +129,27 @@
     validate: (v, id) => {
       const name = v.name.trim();
       if (!name) return 'Enter the company name';
-      if (!v.customerNumber.trim()) return 'Enter a customer number';
+      if (!v.customerCode.trim()) return 'Enter an Opter customer code';
       if (MASTER_CUSTOMERS.some(c => c.id !== id && c.name.trim().toLowerCase() === name.toLowerCase())) return 'A customer with this name already exists';
       if (v.email.trim() && !EMAIL_RE.test(v.email.trim())) return 'Enter a valid email address';
       return '';
     },
     save: (v, id) => {
-      const data = { name: v.name.trim(), customerNumber: v.customerNumber.trim(), email: v.email.trim(), phone: v.phone.trim(), address: v.address.trim() };
+      const data = { name: v.name.trim(), customerCode: v.customerCode.trim(), customerNumber: v.customerNumber.trim(), email: v.email.trim(), phone: v.phone.trim(), address: v.address.trim() };
       if (id) Object.assign(customerById(id), data);
-      else MASTER_CUSTOMERS.push({ id: 'cust-' + Date.now(), orgNumber: '', priceList: 'Base', contacts: 0, ...data });
+      else MASTER_CUSTOMERS.push({ id: 'cust-' + Date.now(), orgNumber: '', priceList: 'Base', contacts: 0, active: true, ...data });
     },
   };
 
   AA_ADMIN.panels.Customers = () => {
     const q = (S.adminCustomerQuery || '').trim().toLowerCase();
-    const filtered = MASTER_CUSTOMERS.filter(c => !q || [c.name, c.customerNumber, c.email, c.address].join(' ').toLowerCase().includes(q));
+    const filtered = MASTER_CUSTOMERS.filter(c => !q || [c.name, c.customerCode, c.customerNumber, c.email, c.address].join(' ').toLowerCase().includes(q));
     const { pageRows, pager } = AA_ADMIN.paginate(filtered, 'customers', 15);
-    const search = `<input aria-label="Search customers" value="${editorText(S.adminCustomerQuery || '')}" onchange="setAdminCustomerQuery(this.value)" placeholder="Search company, number, email or address" style="height:36px;border:1px solid var(--line);border-radius:4px;padding:0 10px;font:inherit;min-width:260px">`;
+    const search = `<input aria-label="Search customers" value="${editorText(S.adminCustomerQuery || '')}" onchange="setAdminCustomerQuery(this.value)" placeholder="Search company, code, number, email or address" style="height:36px;border:1px solid var(--line);border-radius:4px;padding:0 10px;font:inherit;min-width:280px">`;
     return AA_ADMIN.toolbar(search + AA_ADMIN.addButton('customers', '+ Add Customer'))
       + `<div class="sub" style="margin-bottom:8px">${filtered.length} of ${MASTER_CUSTOMERS.length} customers</div>`
-      + masterTable(['Company', 'Customer Number', 'Phone', 'Email', 'Address', 'Contacts', 'Status', ''], pageRows.map(c => [
+      + masterTable(['Customer Code', 'Company', 'Customer Number', 'Phone', 'Email', 'Address', 'Contacts', 'Status', ''], pageRows.map(c => [
+        `<span class="code-text" style="font-weight:700">${editorText(c.customerCode || '—')}</span>`,
         `<strong>${editorText(c.name)}</strong>`,
         `<span class="code-text">${editorText(c.customerNumber || c.id)}</span>`,
         cell(c.phone),
