@@ -38,7 +38,7 @@
   };
 
   caseNarrative = function (c, tasks) {
-    const p = text => `<p data-aa-style="aa-static-style-99">${text}</p>`;
+    const p = text => `<p data-aa-style="aa-static-style-99" style="font-size:12px">${text}</p>`;
     if (SUPPLIED[c.id]) return SUPPLIED[c.id].map(p).join('');
     const rec = acknowledgementRecord(c.id);
     const hasEmail = S.communications.some(m => m.caseId === c.id && m.direction === 'Incoming');

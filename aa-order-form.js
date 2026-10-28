@@ -297,13 +297,46 @@
     if (role !== 'c') { c[role + 'name'] = v; quietEdit(c, `${ROLE_LABEL[role]} name updated`); }
   };
 
+  // Accepting a customer change to any field other than the two dates. The base handler stores the value by the row's
+  // position in the page, which changes when this layout reorders the grid, so the value is kept on the Case by label.
+  function acceptOtherField(c, list, item) {
+    const before = orderRowValue(item.label);
+    c.orderOverrides = c.orderOverrides || {};
+    c.orderOverrides[item.label] = item.value;
+    list.splice(list.indexOf(item), 1);
+    if (S.opterOrders[c.id]) S.opterOrders[c.id].needsUpdate = true;
+    if (typeof logCaseActivity === 'function') logCaseActivity(c.id, 'Order data updated from customer request', item.label, actorName(), `${before} → ${item.value}`);
+    S.activities.unshift([`${c.id} · ${item.label} updated from customer request`, actorName(), auditTimestamp()]);
+    render(); toast('Order field updated');
+  }
+  function orderRowValue(label) {
+    const row = [...document.querySelectorAll('.order-line,.order-metric')].find(r => r.querySelector(':scope > span')?.textContent.trim() === label);
+    const f = row && row.querySelector('input:not([type=hidden]), select, textarea, strong');
+    if (!f) return '—';
+    if (f.tagName === 'SELECT') return f.options[f.selectedIndex]?.text || '—';
+    return ('value' in f ? f.value : f.textContent).trim() || '—';
+  }
+  // Puts accepted values back into their rows on every redraw.
+  function applyOrderOverrides(grid, c) {
+    const o = c.orderOverrides || {};
+    grid.querySelectorAll('.order-line,.order-metric').forEach(row => {
+      const label = row.querySelector(':scope > span')?.textContent.trim();
+      if (!label || !(label in o)) return;
+      const val = o[label], inp = row.querySelector('input.order-inline-input:not([type=hidden])'), sel = row.querySelector('select'), ro = row.querySelector('strong');
+      if (inp) { inp.value = val; inp.setAttribute('value', val); }
+      else if (sel) { const opt = [...sel.options].find(x => x.text === val || x.value === val); if (opt) sel.value = opt.value; }
+      else if (ro) ro.textContent = val;
+    });
+  }
+
   // Another layer (aa-case-activity-view.js) logs customer changes to Order dates; the two date rows are owned here.
   const confirmChainBase = confirmOrderChange;
   confirmOrderChange = function (caseId, label) {
     const map = { 'Pickup Date / Time': 'pfromAt', 'Delivery Date / Time': 'dfromAt' };
     const key = map[label], c = CASE_DETAILS[caseId], list = S.orderChangeRequests[caseId] || [];
     const item = list.find(x => x.label === label);
-    if (!key || !c || !item) return confirmChainBase(caseId, label);
+    if (!c || !item) return confirmChainBase(caseId, label);
+    if (!key) return acceptOtherField(c, list, item);
     const before = c[key] || '—', to = key.replace('from', 'to'), oldFrom = parseAt(c[key]), oldTo = parseAt(c[to]);
     const nv = parseAt(item.value);
     c[key] = `${fromIso(nv.date) || fromIso(oldFrom.date)}, ${nv.time || oldFrom.time}`;
@@ -348,7 +381,13 @@
       + (err ? `<div class="order-field-error" role="alert">${editorText(err.msg)}</div>` : '');
   }
 
-  const STYLE = `.order-street{display:grid;grid-template-columns:84px minmax(0,1fr);gap:6px}.order-card,.order-card.full{overflow:visible}.order-msg-row{grid-column:1/-1;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}@media(max-width:1000px){.order-msg-row{grid-template-columns:minmax(0,1fr)}}.order-line.order-msg{display:block}.order-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}.order-line textarea.order-inline-input{display:block;width:100%;min-height:118px;height:auto;padding:8px 10px;resize:vertical;line-height:1.45;font:inherit;box-sizing:border-box}.order-field-error{margin-top:4px;font-size:11.5px;color:#c51f2d}.order-inline-input.invalid{border-color:#c51f2d;background:#fff5f5}#root .order-card .order-card-head h3.order-msg-title{font-weight:400!important}.order-calculated{background:#f1f4f8!important;color:#44536a;cursor:default}.order-picker-empty{padding:8px 12px;color:var(--muted);font-size:12px}`;
+  const STYLE = `.compact-order-table .goods-desc-col{width:230px!important;min-width:230px}.compact-order-table td.goods-desc-col input{width:100%!important;min-width:0;box-sizing:border-box}.order-street{display:grid;grid-template-columns:84px minmax(0,1fr);gap:6px}.order-card,.order-card.full{overflow:visible}.order-msg-row{grid-column:1/-1;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}@media(max-width:1000px){.order-msg-row{grid-template-columns:minmax(0,1fr)}}.order-line.order-msg{display:block}.order-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}.order-line textarea.order-inline-input{display:block;width:100%;min-height:118px;height:auto;padding:8px 10px;resize:vertical;line-height:1.45;font:inherit;box-sizing:border-box}.order-field-error{margin-top:4px;font-size:11.5px;color:#c51f2d}.order-inline-input.invalid{border-color:#c51f2d;background:#fff5f5}#root .order-card .order-card-head h3.order-msg-title{font-size:12px;font-weight:400!important;color:var(--muted);line-height:1.4}.compact-order-table .goods-desc-col input{width:320px}.order-upd{position:relative}.order-upd-badge{position:absolute;top:-9px;right:8px;z-index:2;display:inline-grid;place-items:center;width:18px;height:18px;padding:0;border:0;border-radius:50%;background:#e3a008;color:#fff;font:italic 800 11px Georgia,serif;cursor:pointer}.order-upd.up .order-upd-pop{top:auto;bottom:calc(100% + 3px)}.order-upd-pop{display:none;position:absolute;z-index:60;top:calc(100% + 3px);right:0;width:max-content;min-width:230px;max-width:min(340px,90vw);padding:10px 12px 11px;background:#fff;border:1px solid #d9e2ec;border-radius:8px;box-shadow:0 10px 26px rgba(20,35,58,.16);text-align:left}.order-upd-pop:before{content:"";position:absolute;top:-6px;right:9px;width:10px;height:10px;background:#fff;border-left:1px solid #d9e2ec;border-top:1px solid #d9e2ec;transform:rotate(45deg)}.order-upd.up .order-upd-pop:before{top:auto;bottom:-6px;transform:rotate(225deg)}.order-upd.hov .order-upd-pop,.order-upd:focus-within .order-upd-pop,.order-upd.open .order-upd-pop{display:block}.order-upd-head{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:7px}.order-upd-head>span{font-size:11.5px;font-weight:700;color:#8a5a00;letter-spacing:.01em}.order-upd-compare{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;gap:12px}
+.order-upd-col{min-width:0;display:flex;flex-direction:column;gap:3px}
+.order-upd-lbl{font-size:11px;color:#6b778a}
+.order-upd-val{font-size:12.5px;color:#5b6b80;overflow-wrap:anywhere}
+.order-upd-col.is-new .order-upd-lbl{color:#0869b6;font-weight:650}
+.order-upd-col.is-new .order-upd-val{font-size:13px;font-weight:700;color:#14233a}
+.order-upd-arrow{color:#6b778a;font-size:14px}.order-upd-icons{display:flex;gap:6px;flex:none}.order-upd-icons button{width:28px;height:28px;border-radius:50%;border:1px solid var(--line);background:#fff;cursor:pointer;font-size:14px;line-height:1;padding:0}.order-upd-icons .accept{color:#188756;border-color:#188756}.order-upd-icons .accept:hover{background:#e9f8ef}.order-upd-icons .reject{color:#c51f2d;border-color:#f1a7ad}.order-upd-icons .reject:hover{background:#fdeef0}.order-upd-count{margin-right:8px;padding:2px 9px;border-radius:999px;background:#fff8e6;border:1px solid #f0d78c;color:#8a5a00;font-size:11.5px;font-weight:700}.order-calculated{background:#f1f4f8!important;color:#44536a;cursor:default}.order-picker-empty{padding:8px 12px;color:var(--muted);font-size:12px}`;
   if (!document.getElementById('order-form-style')) document.head.insertAdjacentHTML('beforeend', `<style id="order-form-style">${STYLE}</style>`);
 
   // The parcel table follows the order of the Opter parcel table: quantity, parcel type, goods marking, goods type, weight,
@@ -371,6 +410,20 @@
     const order = GOODS_ORDER.map(name => newHeads.indexOf(name));
     if (order.some(x => x < 0)) return;
     [headRow, ...table.querySelectorAll('tbody tr')].forEach(tr => { const cells = [...tr.cells]; order.forEach(idx => tr.appendChild(cells[idx])); });
+    // Marks the Goods Description cells so they can be made wider than the other columns.
+    const descAt = GOODS_ORDER.indexOf('Goods Description');
+    [headRow, ...table.querySelectorAll('tbody tr')].forEach(tr => tr.cells[descAt] && tr.cells[descAt].classList.add('goods-desc-col'));
+    // Quantity starts at 1: 0 can't be typed, and an empty box goes back to 1 when it loses focus.
+    const qtyAt = GOODS_ORDER.indexOf('Qty');
+    table.querySelectorAll('tbody tr').forEach(tr => {
+      const inp = tr.cells[qtyAt] && tr.cells[qtyAt].querySelector('input');
+      if (!inp || inp.getAttribute('min') === '1') return;
+      inp.setAttribute('min', '1');
+      if (+inp.value < 1) { inp.value = '1'; inp.setAttribute('value', '1'); }
+      // Inline handlers, because the page is rebuilt from HTML text and listeners added here would be lost.
+      inp.setAttribute('oninput', "if(this.value!==''&&+this.value<1)this.value=''");
+      inp.setAttribute('onblur', "if(this.value===''){this.value='1';this.setAttribute('value','1');this.dispatchEvent(new Event('change',{bubbles:true}))}");
+    });
   }
   // Dimensions & Capacity is the total of the Goods / Colli table. With at least one goods row the totals are calculated
   // from what the table shows and can't be edited; with no rows the fields stay editable.
@@ -388,6 +441,54 @@
       const badge = m.querySelector('.ai-field-confidence'); if (badge) { badge.textContent = 'Auto'; badge.className = 'ai-field-confidence is-manual'; badge.removeAttribute('title'); badge.setAttribute('aria-label', 'Calculated from Goods / Colli'); }
     });
   }
+  // A customer's suggested change to a field: the field gets an "Update suggested" badge and the comparison opens in a
+  // popup on hover, focus or click, so the form keeps its height. Accept and Keep current run the same actions as before.
+  function decoratePending(grid, c) {
+    const list = (S.orderChangeRequests && S.orderChangeRequests[c.id]) || [];
+    grid.querySelectorAll('.order-field-pending').forEach(row => {
+      const block = row.querySelector('.order-change-pending'), ctl = row.querySelector('.order-inline-control');
+      if (!block || !ctl) return;
+      const onclick = block.querySelector('.confirm') ? block.querySelector('.confirm').getAttribute('onclick') : '';
+      const label = onclick.split("'")[3] || '', change = list.find(x => x.label === label) || {};
+      const composite = row.querySelector('.order-composite'), field = row.querySelector('input:not([type=hidden]), select, textarea');
+      const current = composite ? composite.value : field ? (field.tagName === 'SELECT' ? field.options[field.selectedIndex].text : field.value) : '';
+      const enc = encodeURIComponent(label);
+      block.remove();
+      ctl.classList.add('order-upd');
+      ctl.insertAdjacentHTML('beforeend', `<button type="button" class="order-upd-badge" title="Update suggested" aria-label="Update suggested" aria-haspopup="dialog" onclick="opUpdToggle(this)">i</button>`
+        + `<div class="order-upd-pop" role="dialog" aria-label="Suggested update for ${editorText(label)}"><div class="order-upd-head"><span>Customer suggests</span><div class="order-upd-icons"><button type="button" class="accept" title="Accept" aria-label="Accept update" onclick="opUpd('ok','${enc}')">✓</button><button type="button" class="reject" title="Reject" aria-label="Reject update" onclick="opUpd('no','${enc}')">✕</button></div></div>`
+        + `<div class="order-upd-compare"><div class="order-upd-col"><span class="order-upd-lbl">Current value</span><span class="order-upd-val">${editorText(current || '—')}</span></div><span class="order-upd-arrow" aria-hidden="true">→</span><div class="order-upd-col is-new"><span class="order-upd-lbl">Customer provided</span><span class="order-upd-val">${editorText(change.value || '')}</span></div></div></div>`);
+    });
+    grid.querySelectorAll('.order-card').forEach(card => {
+      const n = card.querySelectorAll('.order-upd-badge').length, actions = card.querySelector('.order-card-head .actions');
+      if (n && actions) actions.insertAdjacentHTML('afterbegin', `<span class="order-upd-count">${n} ${n === 1 ? 'update' : 'updates'} suggested</span>`);
+    });
+  }
+  const placePop = wrap => {
+    const pop = wrap.querySelector('.order-upd-pop'); if (!pop) return;
+    pop.style.visibility = 'hidden'; pop.style.display = 'block';
+    const h = pop.offsetHeight, r = wrap.getBoundingClientRect();
+    wrap.classList.toggle('up', r.bottom + h + 12 > window.innerHeight && r.top - h - 12 > 0);
+    pop.style.display = ''; pop.style.visibility = '';
+  };
+  // Hover opens the popup straight away and closes it 0.3 s after the pointer leaves, so there is time to move onto it.
+  ['mouseover', 'focusin'].forEach(type => document.addEventListener(type, e => {
+    const w = e.target.closest && e.target.closest('.order-upd'); if (!w) return;
+    placePop(w);
+    if (type === 'mouseover') { clearTimeout(w._hovTimer); w.classList.add('hov'); }
+  }));
+  document.addEventListener('mouseout', e => {
+    const w = e.target.closest && e.target.closest('.order-upd'); if (!w || (e.relatedTarget && w.contains(e.relatedTarget))) return;
+    clearTimeout(w._hovTimer); w._hovTimer = setTimeout(() => w.classList.remove('hov'), 300);
+  });
+  window.opUpdToggle = btn => { const wrap = btn.closest('.order-upd'), open = wrap.classList.contains('open'); document.querySelectorAll('.order-upd.open').forEach(w => w.classList.remove('open')); if (!open) { placePop(wrap); wrap.classList.add('open'); } };
+  window.opUpd = (action, enc) => { const c = selectedCaseData(), label = decodeURIComponent(enc); if (action === 'ok') confirmOrderChange(c.id, label); else rejectOrderChange(c.id, label); };
+  if (!window.__opUpdDismiss) {
+    window.__opUpdDismiss = true;
+    document.addEventListener('click', e => { if (!(e.target.closest && e.target.closest('.order-upd'))) document.querySelectorAll('.order-upd.open').forEach(w => w.classList.remove('open')); });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') { document.querySelectorAll('.order-upd.open').forEach(w => w.classList.remove('open')); const ae = document.activeElement; if (ae && ae.closest && ae.closest('.order-upd')) ae.blur(); } });
+  }
+
   const removeGoodsBase = removeGoodsRow;
   removeGoodsRow = function (caseId, i) {
     const c = CASE_DETAILS[caseId], before = goodsRowsFor(selectedCaseData()).length;
@@ -458,8 +559,8 @@
           rowHtml('Country', countryHtml(role, c[role + 'country'])),
           rowHtml('Phone', input(c[role + 'phone'] || '', `type="tel" aria-label="Phone" onchange="opSet('${role}','phone',this.value)"`)),
           renameLabel(find(source, 'Contact'), 'Name of contact'),
-          fromRow, rowHtml('To Date and Time', dateTimeHtml(c, role, 'to'), { score: 90 }),
           find(source, refLabel),
+          fromRow, rowHtml('To Date and Time', dateTimeHtml(c, role, 'to'), { score: 90 }),
         ]);
       };
       const pickup = party('p', cards['Pickup / Sender'], 'Pickup / Sender', 'Sender Reference');
@@ -485,6 +586,8 @@
       const extras = [...grid.children].filter(el => { const h = el.querySelector('h3'); return !(h && used.has(h.textContent.replace(/^\d+\.\s*/, '').trim())); });
       const ordered = [customer, order, messages, pickup, delivery, ship, ...rest, ...extras];
       grid.replaceChildren(...ordered);
+      applyOrderOverrides(grid, c);
+      decoratePending(grid, c);
       // A field with no value is empty, not a dash.
       grid.querySelectorAll('input.order-inline-input:not([type=hidden]), textarea.order-inline-input').forEach(el => { if (/^[—–-]$/.test(el.value.trim())) { el.value = ''; el.setAttribute('value', ''); el.textContent = ''; } });
       grid.querySelectorAll('.order-card > .order-card-head > h3:not(.order-msg-title)').forEach((h, i) => { h.textContent = h.textContent.replace(/^\d+\.\s*/, `${i + 1}. `); });

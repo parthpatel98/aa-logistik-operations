@@ -36,8 +36,9 @@
     + '.tc-chart{background:#fff;border:1px solid var(--line);border-radius:8px;padding:14px 16px}'
     + '.tc-chart h3{margin:0;font-size:14px;font-weight:700;color:var(--ink)}'
     + '.tc-sub{margin:2px 0 8px;color:var(--muted);font-size:12px}'
-    + '.tc-legend{display:flex;flex-wrap:wrap;gap:6px 16px;margin-top:10px;font-size:12px;color:var(--muted);align-items:center}'
-    + '.tc-legend .tc-group{font-weight:700;color:var(--ink);margin-right:2px}'
+    + '.tc-legends{display:flex;flex-direction:column;gap:8px;margin-top:12px;padding-top:12px;border-top:1px solid var(--line)}'
+    + '.tc-legend{display:grid;grid-template-columns:64px 1fr;gap:6px 12px;font-size:12px;color:var(--muted);align-items:center}'
+    + '.tc-legend .tc-group{font-weight:700;color:var(--ink)}.tc-legend .tc-items{display:flex;flex-wrap:wrap;gap:6px 18px}'
     + '.tc-legend span{display:inline-flex;align-items:center;gap:6px}.tc-legend i{width:10px;height:10px;border-radius:2px;display:inline-block}'
     + '.tc-legend em{font-style:normal}.tc-legend b{color:var(--ink)}.tc-legend .tc-zero{opacity:.55}'
     + '.tc-table-wrap{margin-top:10px;font-size:12px}.tc-table-wrap summary{cursor:pointer;color:var(--blue);width:max-content}'
@@ -98,7 +99,7 @@
   }
 
   function chartCard(depts, statusRows, timeRows) {
-    const legendItem = (s, sum) => `<span class="${sum ? '' : 'tc-zero'}"><i style="background:${s.color}"></i>${s.icon ? `<em>${s.icon}</em>` : ''}${esc(s.label)} <b>${sum}</b></span>`;
+    const legendItem = (s, sum) => `<span class="${sum ? '' : 'tc-zero'}"><i style="background:${s.color}"></i>${esc(s.label)} <b>${sum}</b></span>`;
     const statusLegend = STATUS_SERIES.map((s, k) => legendItem(s, statusRows.reduce((a, r) => a + r[k], 0))).join('');
     const timeLegend = TIME_SERIES.map((s, k) => legendItem(s, timeRows.reduce((a, r) => a + r[k], 0))).join('');
     const headers = [...STATUS_SERIES.map(s => s.label), ...TIME_SERIES.map(s => s.label)];
@@ -107,7 +108,7 @@
     return `<section class="tc-chart"><h3>Tasks by department</h3>`
       + `<p class="tc-sub">Both bars count every task. Left: by status. Right: by time (overdue, due soon, active, completed).</p>`
       + groupedChart(depts, statusRows, timeRows, 'Tasks by status and by time for each department')
-      + `<div class="tc-legend"><span class="tc-group">Status</span>${statusLegend}<span class="tc-group">Time</span>${timeLegend}</div>`
+      + `<div class="tc-legends"><div class="tc-legend" role="group" aria-label="Status legend"><span class="tc-group">Status</span><div class="tc-items">${statusLegend}</div></div><div class="tc-legend" role="group" aria-label="Time legend"><span class="tc-group">Time</span><div class="tc-items">${timeLegend}</div></div></div>`
       + `<details class="tc-table-wrap"><summary>Show as table</summary>${table}</details></section>`;
   }
 
