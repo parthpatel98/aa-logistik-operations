@@ -662,7 +662,7 @@ function postInternalComment() { let input=document.getElementById('case-comment
         const addressedEmailDialogBase=editorDialog;editorDialog=function(){let d=S.editorData;return addressedEmailDialogBase()}
         document.head.insertAdjacentHTML('beforeend',`<style>.email-compose-modal{width:min(760px,calc(100vw - 40px))}.email-address-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}.email-address-grid label{display:flex;flex-direction:column;gap:7px;font-weight:700}.email-address-grid .wide{grid-column:1/-1}.email-address-grid input,.email-address-grid textarea{width:100%;border:1px solid var(--line);border-radius:5px;padding:10px;font:inherit}.email-address-grid textarea{height:180px;resize:vertical;font-weight:400}@media(max-width:700px){.email-address-grid{grid-template-columns:1fr}.email-address-grid .wide{grid-column:auto}}</style>`)
         caseProgressStrip=function(c,tasks){let done=taskCompletedCount(tasks),pct=tasks.length?Math.round(done/tasks.length*100):0;return `<div class="case-strip case-strip-progress-only"><strong>Case progress</strong><div class="progress-track"><i style="width:${pct}%"></i></div><span>${done} of ${tasks.length} Tasks completed</span></div>`}
-        caseView=function(){let c=selectedCaseData(),tasks=selectedCaseTasks(),comms=Math.max(2,S.communications.filter(m=>m.caseId===c.id).length),aliases={'Order Data':'Order','Activities':'Activity'},pending=!acknowledgementRecord(c.id),hasOrderChanges=(S.orderChangeRequests[c.id]||[]).length>0;S.caseTab=aliases[S.caseTab]||S.caseTab||'Overview';let tabs=[['Overview',''],['Order',' (1)'],['Tasks',` (${tasks.length})`],['Communication',` (${comms})`],['Activity','']];return `<div class="case-workspace"><button class="case-back" onclick="go('cases')">← Back to Cases</button><section class="case-v2-head"><div class="case-v2-title"><div><h1>${c.id} · ${c.caseClass} – ${c.customer}</h1><div class="sub">Received ${caseDateOnly(c.created)} · Due ${c.due} · ${c.departments}</div></div>${pending?`<button class="ack-header-state" onclick="openAcknowledgement('${c.id}')">Acknowledgement Pending</button>`:''}${pill(c.status)}${pill(`${c.priority} Priority`)}${opterHeaderAction(c)}${S.role==='Admin'&&!hasOrderChanges?`<button class="btn" title="Demo: the customer emails a change to this Case. The email is added to Communication and the change is suggested on the Order tab" onclick="simulateOrderChangeEmail('${c.id}')">✉ Trigger Case Update</button>`:''}${S.role==='Admin'?`<button class="btn" onclick="openEditor('case','${c.id}')">✎ Edit Case</button>`:''}</div><div class="case-v2-tabs">${tabs.map(([t,n])=>`<button class="${S.caseTab===t?'active':''}" onclick="S.caseTab='${t}';render()">${t}${n}${t==='Order'&&hasOrderChanges?'<span class="tab-dot" title="New customer update to review"></span>':''}</button>`).join('')}</div></section>${caseTabV2()}</div>`}
+        caseView=function(){let c=selectedCaseData(),tasks=selectedCaseTasks(),comms=Math.max(2,S.communications.filter(m=>m.caseId===c.id).length),aliases={'Order Data':'Order','Activities':'Activity'},pending=!acknowledgementRecord(c.id),hasOrderChanges=(S.orderChangeRequests[c.id]||[]).length>0;S.caseTab=aliases[S.caseTab]||S.caseTab||'Overview';let tabs=[['Overview',''],['Order',' (1)'],['Tasks',` (${tasks.length})`],['Communication',` (${comms})`],['Activity','']];return `<div class="case-workspace"><button class="case-back" onclick="go('cases')">← Back to Cases</button><section class="case-v2-head"><div class="case-v2-title"><div><h1>${c.id} · ${c.caseClass} – ${c.customer}</h1><div class="sub">Received ${caseDateOnly(c.created)} · Due ${c.due} · ${c.departments}</div></div>${pending?`<button class="ack-header-state" onclick="openAcknowledgement('${c.id}')">Acknowledgement Pending</button>`:''}${pill(c.status)}${pill(`${c.priority} Priority`)}${opterHeaderAction(c)}${S.role==='Admin'&&!hasOrderChanges?`<button class="btn" title="Demo: the customer emails a change to this Case. The email is added to Communication and the change is suggested on the Order tab" onclick="simulateOrderChangeEmail('${c.id}')">✉ Trigger Case Update</button>`:''}${S.role==='Admin'?`<button class="btn" onclick="openEditor('case','${c.id}')">✎ Edit Case</button>`:''}</div><div class="case-v2-tabs">${tabs.map(([t,n])=>`<button class="${S.caseTab===t?'active':''}" onclick="S.caseTab='${t}';render()">${t==='Order'&&!isTransportCase(c)?'Order Summary':t}${n}${t==='Order'&&hasOrderChanges?'<span class="tab-dot" title="New customer update to review"></span>':''}</button>`).join('')}</div></section>${caseTabV2()}</div>`}
         document.head.insertAdjacentHTML('beforeend',`<style>.ack-header-state{border:1px solid #efc46a;background:#fff4d8;color:#895600;border-radius:5px;padding:8px 11px;font:inherit;font-weight:800;cursor:pointer;white-space:nowrap}.ack-header-state:hover,.ack-header-state:focus{background:#ffeab7;outline:2px solid rgba(178,112,0,.18)}.case-strip-progress-only{grid-template-columns:auto minmax(180px,420px) auto;justify-content:start}</style>`)
         const streamlinedCommunicationTab=communicationTabV2;communicationTabV2=function(){return streamlinedCommunicationTab().replace(/^<div class="notice(?: green)?">[\s\S]*?<\/div>/,'')}
         function orderFieldConfidence(label,index=0){let scores={'Customer':98,'Invoice Marking':90,'Customer No.':98,'Payer':70,'Contact':93,'Region':65,'Customer Reference':95,'Internal Order No.':58,'PO Number':95,'Location':index?94:96,'Pickup Date / Time':90,'Loading Reference':88,'Geographic / Price Zone':88,'Delivery Date / Time':86,'Delivery Reference':92,'Transport Mode':97,'Distance':88,'Service':95,'Estimated Driving Time':84,'Temperature Requirement':82,'Freight Document No.':55,'Dangerous Goods':89,'Estimated CO₂ Emission':76,'Number of Packages':96,'Gross Weight':94,'Chargeable Weight':94,'Length':92,'Width':92,'Height':92,'Total Volume':90,'Pallet Spaces':87,'Loading Metres':85};return scores[label]??88}
@@ -2505,9 +2505,12 @@ function emailTemplateSelect(current,onchange,blankLabel='Select template'){retu
 function emailTemplateText(id,ctx){let t=(window.MASTER_EMAIL_TEMPLATES||[]).find(x=>x.id===id);if(!t)return {subject:'',body:''};
   // ctx.values comes from emailTemplateValues(case). Callers that only have the acknowledgement fields pass those four instead.
   let missing=ctx.missing||[],values=ctx.values||{contactName:ctx.first||'there',caseId:ctx.caseId,statusSummary:ctx.status,missingFields:missing.length?missing.join('\n'):'- Please list the missing details'};
-  return {subject:resolveEmailTemplate(t.subject,values),body:resolveEmailTemplate(t.body,values)}}
+  // A request in the email review has no Case yet, so the phrases that carry the case reference are dropped.
+  let subj=t.subject,body=t.body;
+  if(!values.caseId){const drop=x=>x.replace(/\s*[—–-]\s*\{\{caseId\}\}/g,'').replace(/ with case \{\{caseId\}\},/g,',').replace(/ and opened case \{\{caseId\}\}/g,'').replace(/ of case \{\{caseId\}\}/g,' of your request');subj=drop(subj);body=drop(body)}
+  return {subject:resolveEmailTemplate(subj,values),body:resolveEmailTemplate(body,values)}}
 function emailTemplateFor(id,c){let missing=outstandingCaseFields(c).map(x=>'- '+x.label);return emailTemplateText(id,{values:emailTemplateValues(c,missing)})}
-function applyEmailTemplate(id){if(!id){S.editorData.template='';render();return}let d=S.editorData,c=d.caseId?CASE_DETAILS[d.caseId]:selectedCaseData(),T=emailTemplateFor(id,c);Object.assign(d,{template:id,subject:T.subject,body:T.body});render()}
+function applyEmailTemplate(id){if(!id){S.editorData.template='';render();return}if(S.editorData.reviewId&&window.AA_REVIEW&&AA_REVIEW.templateText){let T=AA_REVIEW.templateText(id,S.editorData.reviewId);Object.assign(S.editorData,{template:id,subject:T.subject,body:T.body});render();return}let d=S.editorData,c=d.caseId?CASE_DETAILS[d.caseId]:selectedCaseData(),T=emailTemplateFor(id,c);Object.assign(d,{template:id,subject:T.subject,body:T.body});render()}
 const emailComposeOpenBase=openCommunication;openCommunication=function(mode,id=''){emailComposeOpenBase(mode,id);if(S.editorType==='compose'&&mode!=='Internal Note'){let c=selectedCaseData();S.editorData.from=SENDER_ADDRESSES[1];if(mode==='New Email')S.editorData.to=c.email;render()}};
 function AAEmailModal({title,subtitle='',notice='',fields='',message='',footer='',close='closeEditor()'}){
   return `<div class="modal-shade email-modal-shade" onclick="if(event.target===this){${close}}"><div class="assign-modal email-compose-modal" role="dialog" aria-modal="true" aria-label="${editorText(title)}"><div class="compose-head"><div><strong>${editorText(title)}</strong>${subtitle?`<span>${editorText(subtitle)}</span>`:''}</div><button type="button" class="compose-close" aria-label="Close" onclick="${close}">×</button></div>${notice?`<div class="compose-notice">${notice}</div>`:''}<div class="compose-body">${fields}${message}</div><div class="compose-foot">${footer}</div></div></div>`;
@@ -3243,13 +3246,27 @@ managerAttentionQueue = function () {
 
   // Enhanced Thread-message counter badge & First Acknowledgement column in Review Requests table
   S.firstAck = S.firstAck || {};
+  // The review state of a request, the same one the detail page reads. The list, the quick acknowledgement and the detail page all use it.
+  window.reviewStateOf = id => (typeof window.edStateOf === 'function' && QUEUE.some(x => x[0] === id)) ? window.edStateOf(id) : null;
+  // The list's First Acknowledgement cell is only Done or Pending. Done: the customer has been responded to (the acknowledgement, or the clarification request, was sent). The finer states are chips on the detail page.
+  window.reviewAckCell = id => {
+    let s = reviewStateOf(id), fa = S.firstAck[id];
+    if ((fa && fa.sent) || (s && (s.acked || s.clarified))) return `<span class="pill green" title="Sent ${editorText((fa && fa.at) || s.acked || s.clarified)}" data-aa-style="aa-static-style-251"><span>✓</span> Done</span>`;
+    return `<div data-aa-style="aa-static-style-252"><span class="pill amber" data-aa-style="aa-static-style-253">Pending</span><button type="button" class="btn icon-btn" onclick="event.stopPropagation();openQuickAckModal('${id}')" title="Send acknowledgement email" aria-label="Send acknowledgement email" data-aa-style="aa-static-style-254"><span>✉</span></button></div>`;
+  };
+  // Classification and Case Class in the list are what the detail page shows for the request's orders.
+  const reviewOrdersJoined = (id, pick, fallback) => { let s = reviewStateOf(id); let v = s ? [...new Set(s.em.px.map(pick).filter(Boolean))].join(' + ') : ''; return v || fallback };
+  window.reviewClassificationOf = (id, fallback) => reviewOrdersJoined(id, o => o.cls.sub, fallback);
+  window.reviewCaseClassOf = (id, fallback) => reviewOrdersJoined(id, o => o.cls.type, fallback);
   window.openQuickAckModal = function (emailId) {
     let q = QUEUE.find(x => x[0] === emailId);
-    let s = (typeof st === 'function') ? st(emailId) : null;
+    let s = reviewStateOf(emailId);
     let customer = q ? q[1] : (s ? s.cls.co : 'Customer');
     let emailAddr = s ? s.e.email : (customer.toLowerCase().replace(/[^a-z0-9]/g, '') + '@client.com');
     let contact = s ? s.e.from : customer;
     let defBody = `Hi ${contact.split(' ')[0]},\n\nThanks for reaching out! We've received your request and logged it under reference ${emailId}.\n\nOur team is looking over the details now to line up the scheduling. We'll be back in touch shortly with confirmation.\n\nBest regards,\n${typeof actorName === 'function' ? actorName() : 'John Andersson'}\nAA Logistik`;
+    // The acknowledgement is the Case Acknowledgement template, the same text as on the detail page.
+    if (s && typeof edAckDraftOf === 'function') defBody = edAckDraftOf(s).body;
 
     let modalHtml = `
       <div id="quick-ack-backdrop" onclick="if(event.target===this)closeQuickAckModal()" data-aa-style="aa-static-style-87">
@@ -3291,18 +3308,19 @@ managerAttentionQueue = function () {
 
   window.submitQuickAck = function (emailId) {
     // The acknowledgement is a reply in the customer's email thread, so it keeps the thread's subject.
-    let s = (typeof st === 'function') ? st(emailId) : null;
+    let s = reviewStateOf(emailId);
     let q = QUEUE.find(x => x[0] === emailId);
     let threadSubject = s?.e?.subj || q?.[2] || 'Receipt Confirmed';
-    let subj = /^re:/i.test(threadSubject) ? threadSubject : `Re: ${threadSubject}`;
+    // Same subject as the acknowledgement on the detail page: the Case Acknowledgement template.
+    let subj = (s && typeof edAckDraftOf === 'function') ? edAckDraftOf(s).subj : (/^re:/i.test(threadSubject) ? threadSubject : `Re: ${threadSubject}`);
     let body = document.getElementById('quick-ack-body')?.value || '';
     let at = (typeof now === 'function') ? now() : '09/10/2026, 12:40';
     let by = (typeof actorName === 'function') ? actorName() : 'John Andersson';
 
     S.firstAck[emailId] = { sent: true, at, by, subject: subj, body };
 
-    if (typeof st === 'function') {
-      let state = st(emailId);
+    {
+      let state = reviewStateOf(emailId);
       if (state) {
         state.acked = at;
         state.sent = state.sent || [];
@@ -3358,13 +3376,13 @@ managerAttentionQueue = function () {
         // Add First Ack cell if not present
         if (!row.querySelector('.td-first-ack')) {
           let ackData = S.firstAck[id];
-          let isAcked = !!(ackData && ackData.sent) || (typeof st === 'function' && st(id)?.acked);
+          let isAcked = !!(ackData && ackData.sent) || reviewStateOf(id)?.acked;
           let ackTd = document.createElement('td');
           ackTd.className = 'td-first-ack';
           ackTd.style.whiteSpace = 'nowrap';
 
           if (isAcked) {
-            let atText = (ackData && ackData.at) || (typeof st === 'function' && st(id)?.acked) || 'Sent';
+            let atText = (ackData && ackData.at) || reviewStateOf(id)?.acked || 'Sent';
             ackTd.innerHTML = `<span class="pill green" title="Sent at ${atText}" data-aa-style="aa-static-style-251"><span>✓</span> Done</span>`;
           } else {
             ackTd.innerHTML = `<div data-aa-style="aa-static-style-252">
@@ -3462,10 +3480,10 @@ managerAttentionQueue = function () {
     if (home || S.queueTab !== 'Awaiting Review') return awaitingReviewQueueTableBase(home);
     let rows = queueRows(home);
     if (!rows.length) return awaitingReviewQueueTableBase(home);
-    let data = rows.map(r => { let metadata = reviewRequestMetadata(r[0]) || {}; return { ref: r[0], subject: r[2], customer: r[1], classification: metadata.classification || 'General coordination', caseClass: metadata.caseClass || 'Other / Unclear', priority: requestPriority(r), received: r[5] } });
+    let data = rows.map(r => { let metadata = reviewRequestMetadata(r[0]) || {}; return { ref: r[0], subject: r[2], customer: r[1], classification: reviewClassificationOf(r[0], metadata.classification || 'General coordination'), caseClass: reviewCaseClassOf(r[0], metadata.caseClass || 'Other / Unclear'), priority: requestPriority(r), received: r[5] } });
     let s = currentAwaitingSort();
     if (s.key) { let dirMul = s.dir === 'asc' ? 1 : -1; data.sort((a, b) => s.key === 'priority' ? ((PRIORITY_RANK[a.priority] || 0) - (PRIORITY_RANK[b.priority] || 0)) * dirMul : (parseQueueDate(a.received) - parseQueueDate(b.received)) * dirMul) }
-    return `<table><thead><tr><th>Received${sortArrow('received')}</th><th>Reference</th><th>Subject</th><th>Customer</th><th>Classification</th><th>Case Class</th><th>Priority${sortArrow('priority')}</th><th>First Acknowledgement</th></tr></thead><tbody>${data.map(d => { let acked = !!(S.firstAck[d.ref] && S.firstAck[d.ref].sent) || (typeof st === 'function' && st(d.ref)?.acked); let ackCell = acked ? `<span class="pill green" data-aa-style="aa-static-style-251"><span>✓</span> Done</span>` : `<div data-aa-style="aa-static-style-252"><span class="pill amber" data-aa-style="aa-static-style-253">Pending</span><button type="button" class="btn icon-btn" onclick="event.stopPropagation();openQuickAckModal('${d.ref}')" title="Send acknowledgement email" aria-label="Send acknowledgement email" data-aa-style="aa-static-style-254"><span>✉</span></button></div>`; return `<tr><td data-aa-style="aa-static-style-73">${editorText(d.received)}</td><td><button class="case-link" onclick="openReviewCase('${d.ref}')">${d.ref}</button></td><td><span class="subj-clamp" title="${editorText(d.subject)}">${editorText(d.subject)}</span></td><td>${editorText(d.customer)}</td><td>${editorText(d.classification)}</td><td>${editorText(d.caseClass)}</td><td>${pill(d.priority)}</td><td data-aa-style="aa-static-style-73">${ackCell}</td></tr>` }).join('')}</tbody></table>`;
+    return `<table><thead><tr><th>Received${sortArrow('received')}</th><th>Reference</th><th>Subject</th><th>Customer</th><th>Classification</th><th>Case Class</th><th>Priority${sortArrow('priority')}</th><th>First Acknowledgement</th></tr></thead><tbody>${data.map(d => { let ackCell = reviewAckCell(d.ref);return `<tr><td data-aa-style="aa-static-style-73">${editorText(d.received)}</td><td><button class="case-link" onclick="openReviewCase('${d.ref}')">${d.ref}</button></td><td><span class="subj-clamp" title="${editorText(d.subject)}">${editorText(d.subject)}</span></td><td>${editorText(d.customer)}</td><td>${editorText(d.classification)}</td><td>${editorText(d.caseClass)}</td><td>${pill(d.priority)}</td><td data-aa-style="aa-static-style-73">${ackCell}</td></tr>` }).join('')}</tbody></table>`;
   };
 })();
 /* Company Tasks relabeled "All Department Tasks" with a Group By control. */
