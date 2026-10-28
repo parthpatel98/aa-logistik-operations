@@ -17,6 +17,8 @@
     cases.forEach(c => {
       const state = caseMailState(c);
       if (state === 'none') return;
+      // Replace this Case's incoming message rather than adding another copy each time the data is rebuilt.
+      S.communications = S.communications.filter(m => m.id !== `MSG-IN-${c.id}`);
       S.communications.push({ id: `MSG-IN-${c.id}`, caseId: c.id, direction: 'Incoming', subject: c.subject, body: c.body, author: c.contact, at: c.created });
       if (state === 'sent') CASE_ACKS[c.id] = { by: 'John Andersson', at: c.created, to: c.email, subject: `Acknowledgement – ${c.id} · ${c.customer}` };
     });
@@ -48,12 +50,6 @@
       empty.setAttribute('style', 'padding:22px 16px;color:var(--muted);font-size:13px');
       empty.textContent = 'No emails for this case yet. The case was created without a customer email.';
       list.appendChild(empty);
-    }
-    if (hasIncoming(c) && !acknowledgementRecord(c.id)) {
-      const pending = document.createElement('div');
-      pending.setAttribute('style', 'display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 16px;background:#fff8e6;border-top:1px solid #f1dfb0;font-size:13px');
-      pending.innerHTML = `<span><strong>Acknowledgement not sent</strong> · the customer has not been told their request was received.</span><button type="button" class="btn primary" onclick="openAcknowledgement('${c.id}')">Send acknowledgement</button>`;
-      list.appendChild(pending);
     }
     const caseClassOf = key => {
       if (key === c.id + '|in') return c.caseClass || '';

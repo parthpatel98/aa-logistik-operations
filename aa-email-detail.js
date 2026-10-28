@@ -384,6 +384,6 @@ sendCommunication = function () {
 };
 window.AA_REVIEW={tsk:TSK,catmap:CATMAP,cats:ALLSUBS,types:TYPES,depts:DEPTS,cust:(typeof MASTER_CUSTOMERS!=='undefined'&&MASTER_CUSTOMERS.length?[...new Set(MASTER_CUSTOMERS.map(c=>c.name))]:CUST),info:id=>{const s=String(id).startsWith('EML-')&&QUEUE.some(q=>q[0]===id)?st(id):null;return s?{cat:s.cls.sub,sub:s.cls.sub,type:s.cls.type,depts:s.depts}:null},threadCount:id=>{if(!(String(id).startsWith('EML-')&&QUEUE.some(q=>q[0]===id)))return 1;return threadMsgs(st(id)).length}};
 const nonTransportCase=()=>{const c=typeof CASE_DETAILS!=='undefined'&&CASE_DETAILS[S.selectedCase];return !!c&&c.orderKind==='Non-transport'};
-if(typeof caseView==='function'){const caseViewBase=caseView;caseView=function(){if(!nonTransportCase())return caseViewBase();if(S.caseTab==='Order'||S.caseTab==='Order Data')S.caseTab='Overview';const t=document.createElement('template');t.innerHTML=caseViewBase();t.content.querySelectorAll('.case-v2-tabs button').forEach(b=>{if(/^Order\b/.test(b.textContent.trim()))b.remove()});return t.innerHTML}}
+// A Non-transport Case keeps its Order tab: aa-ai-order-overview.js fills it with the Customer, AI Order Overview and Additional Details.
 render();
 })();
