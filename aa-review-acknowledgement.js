@@ -9,7 +9,11 @@
 
   // The Email Thread holds the customer's email and what got it ready for a Case: the acknowledgement, or the clarification request and the customer's answer.
   // Requests waiting on the customer (0) or already answered (1) have a clarification. Of the others, every other one has its acknowledgement sent; the rest are pending.
-  const CLARIFICATION = { 'EML-4103': 0, 'EML-4106': 0, 'EML-4109': 0, 'EML-4102': 1, 'EML-4108': 1 };
+  const CLARIFICATION = { 'EML-4101': 1, 'EML-4103': 0, 'EML-4106': 0, 'EML-4109': 0, 'EML-4102': 1, 'EML-4108': 1 };
+  // The customer's answer to a clarification request, by request. Requests without one get the generic reply.
+  const CUSTOMER_REPLY = {
+    'EML-4101': 'Hi,\n\nThank you for following up. The PO number is PO-88214-ABB, and the robots can be unloaded at the goods-in gate. Ring the bell at Gate 3 and ask for the receiving desk.\n\nPlease let me know if anything else is needed.\n\nKind regards,\n{from}',
+  };
   const plusMinutes = (stamp, min) => {
     const m = String(stamp).match(/^(\d\d)\/(\d\d)\/(\d{4}), (\d\d):(\d\d)$/);
     if (!m) return stamp;
@@ -24,7 +28,7 @@
       const ask = edClarifyDraftOf(s), asked = plusMinutes(s.e.recv, 15);
       s.clarified = asked;
       s.sent.push({ time: asked, subj: ask.subject, body: ask.body });
-      if (CLARIFICATION[id]) s.sent.push({ time: plusMinutes(s.e.recv, 180), fromCustomer: true, subj: 'Re: ' + ask.subject, body: `Hi,\n\nThank you. I have added the details you asked for. Please let me know if anything else is needed.\n\nKind regards,\n${s.e.from}` });
+      if (CLARIFICATION[id]) s.sent.push({ time: plusMinutes(s.e.recv, 180), fromCustomer: true, subj: 'Re: ' + ask.subject, body: (CUSTOMER_REPLY[id] || 'Hi,\n\nThank you. I have added the details you asked for. Please let me know if anything else is needed.\n\nKind regards,\n{from}').replace('{from}', s.e.from) });
       return;
     }
     if (i % 2 !== 0) return;
@@ -73,6 +77,7 @@
       // The details line under the title is split into labelled fields instead of one run of dot-separated text.
       const parts = details.textContent.trim().split(/\s*·\s*/);
       const fields = [
+        ['Reference ID', id],
         ['From', parts[0].replace(/^From\s*/, '')],
         ['Customer', parts[1]],
         ['Received', (parts[2] || '').replace(/^Received\s*/, '')],

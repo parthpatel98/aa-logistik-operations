@@ -52,5 +52,5 @@
   }
 
   AA_ADMIN.panels.Mailboxes = () => MASTER_MAILBOXES.map(([name, address, department, def]) => mailboxCard(name, address, department, def === 'Default')).join('')
-    + '<div class="master-guidance">Which mailbox a message arrives in is a routing hint, never a classification on its own.</div>';
+    + '<div class="master-guidance">Which mailbox a message arrives in is a routing hint, never a category on its own.</div>';
 })();

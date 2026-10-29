@@ -35,7 +35,7 @@
     'Export': 'Freight forwarding', 'Import': 'Freight forwarding', 'Incoming': 'Warehouse', 'Outbound': 'Warehouse', 'Rebooking': 'Warehouse',
     'Inspection': 'Packing', 'PO': 'Finance', 'Invoice': 'Finance', 'Credit note': 'Finance', 'PO Confirmation': 'Finance',
   };
-  const FALLBACK_CATEGORY = 'Other / Unclassified';
+  const FALLBACK_CATEGORY = 'Other';
   window.categoryForClassification = classification => CLASSIFICATION_CATEGORY[classification] || FALLBACK_CATEGORY;
 
   // A Case can carry more than one Classification (c.classes — a primary and a secondary one, each
