@@ -22,9 +22,9 @@
     const fields = [
       ['Received', editorText((parts[0] || '').replace(/^Received\s*/, ''))],
       ['Due', editorText((parts[1] || '').replace(/^Due\s*/, ''))],
-      ['Department', editorText(parts[2] || c.departments)],
       ['Category', editorText(c.classification || '—')],
       ['Case Type', editorText(c.caseClass || '—')],
+      ['Department', editorText(parts[2] || c.departments)],
       ['Status', tag(c.status, STATUS_COLORS)],
       ['Priority', tag(c.priority, PRIORITY_COLORS[c.priority] || PRIORITY_COLORS.Medium)],
       ['Opter Order', !isTransportCase(c) ? '' : order ?`<span style="font-size:13px;color:#14233a;font-weight:650">${editorText(order.id)}</span>` : '<span style="color:var(--muted);font-weight:500">Not created</span>'],
