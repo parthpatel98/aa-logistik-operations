@@ -6,7 +6,7 @@
    duration bars open the filtered Tasks list (aa-manager-overdue-drilldown.js). Loaded last. */
 (function () {
   const managerHomeBase = managerHome;
-  const PRIORITY_STYLE = { High: 'background:#fde8e8;color:#c51f2d', Medium: 'background:#e6f0fb;color:#0871c7', Low: 'background:#eef2f6;color:#52677b' };
+  const PRIORITY_STYLE = { Urgent: 'background:#c51f2d;color:#fff', High: 'background:#fde8d3;color:#a1510a', Medium: 'background:#e6f0fb;color:#0871c7', Low: 'background:#e7f4ec;color:#25774a' };
 
   const { homeDateRangeSelectHtml, homeCustomRangeHtml, homeFilterOptionsHtml } = window.homeHelpers;
   const f = () => S.managerHomeFilters || {};

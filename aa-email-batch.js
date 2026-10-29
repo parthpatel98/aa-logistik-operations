@@ -443,6 +443,17 @@
   const batchRefs = new Set(EMAIL_BATCH.map(row => row.ref));
   for (let i = QUEUE.length - 1; i >= 0; i--) if (batchRefs.has(QUEUE[i][0])) QUEUE.splice(i, 1);
 
+  // The sender of each email. A customer that already has a Case gets its contact, email, phone and customer number from that
+  // Case, with the same lane and goods. "ABB" is the same customer as "ABB Robotics". Customers with no Case yet are listed here.
+  const EXTRA_SENDERS = {
+    'Kuehne + Nagel': { contact: 'Petra Holm', email: 'petra.holm@kuehne-nagel.com', phone: '+46 8 5063 7010', customerNo: '100412', goods: 'Consolidated pallet shipment', pickup: 'Jönköping, Sweden', delivery: 'Hamburg, Germany', weight: '2,400 kg', domain: 'kuehne-nagel.com' },
+  };
+  const ALIAS = { 'ABB': 'ABB Robotics' };
+  const senderFor = customer => {
+    const name = ALIAS[customer] || customer;
+    return Object.values(CASE_DETAILS).find(c => c.customer === name && c.contact) || EXTRA_SENDERS[customer] || {};
+  };
+
   EMAIL_BATCH.forEach(row => {
     const due = row.received.split(',')[0];
     const specs = taskSpecs(row);
@@ -456,6 +467,18 @@
       departments, note: row.variation, source: sourceLabel(row.ref),
       contact: '', email: '', phone: '', customerNo: '', goods: '', pickup: '', delivery: '', weight: '', body: '', domain: '', attachments: [],
     };
+    const sender = senderFor(row.customer);
+    Object.assign(CASE_DETAILS[caseId], {
+      contact: sender.contact || '', email: sender.email || '', phone: sender.phone || '', customerNo: sender.customerNo || '',
+      goods: sender.goods || '', pickup: sender.pickup || '', delivery: sender.delivery || '', weight: sender.weight || '', domain: sender.domain || '',
+      body: `Hello AA Logistik team,
+
+${row.subject}. Please see the details below and let us know if you need anything more from us.
+
+Best regards,
+${sender.contact || row.customer}
+${row.customer}`,
+    });
     CASES.push([caseId, row.customer, row.caseClass, departments, row.priority, due, 'Pending']);
 
     specs.forEach(([title, cls]) => {

@@ -34,11 +34,11 @@
     if (primary && primary.children.length === 2) primary.prepend(primary.children[1]);
 
     // The Classification filter goes: Requests by Classification already shows that breakdown.
-    content.querySelectorAll('.home-filters select[aria-label="Classification"]').forEach(select => select.remove());
+    content.querySelectorAll('.home-filters select[aria-label="Category"]').forEach(select => select.remove());
 
     // Priority Distribution and Request Age share one row with Requests by Classification.
     const row = content.querySelector('.reviewer-secondary-grid');
-    const classification = [...content.querySelectorAll('section')].find(card => cardTitle(card) === 'Requests by Classification');
+    const classification = [...content.querySelectorAll('section')].find(card => cardTitle(card) === 'Requests by Category');
     if (row && classification) {
       classification.classList.add('reviewer-wide-card');
       row.classList.add('reviewer-three-up');

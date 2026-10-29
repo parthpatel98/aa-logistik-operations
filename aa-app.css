@@ -471,6 +471,26 @@ tbody tr:hover {
     color: #c51f2d
 }
 
+.pill.prio-urgent {
+    background: #c51f2d;
+    color: #fff
+}
+
+.pill.prio-high {
+    background: #fde8d3;
+    color: #a1510a
+}
+
+.pill.prio-medium {
+    background: var(--bluebg);
+    color: #0869b6
+}
+
+.pill.prio-low {
+    background: #e7f4ec;
+    color: #25774a
+}
+
 .filters {
     display: flex;
     gap: 9px;
@@ -10068,4 +10088,20 @@ small,
 [data-aa-style="aa-static-style-93"],
 [data-aa-style="aa-static-style-122"] {
     overflow: visible !important;
+}
+.order-extra-row {
+    display: grid;
+    grid-template-columns: minmax(140px, .8fr) minmax(0, 1.6fr) auto;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 8px
+}
+
+.order-extra-row:last-child {
+    margin-bottom: 0
+}
+
+.order-extra-row .order-inline-input {
+    width: 100%;
+    box-sizing: border-box
 }

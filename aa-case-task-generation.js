@@ -99,7 +99,7 @@
   }
   window.matchingTaskTemplates = matchingTemplates;
 
-  const PRIORITY_LABEL = { High: 'High', Normal: 'Medium', Low: 'Low' };
+  const PRIORITY_LABEL = { Urgent: 'Urgent', High: 'High', Normal: 'Medium', Medium: 'Medium', Low: 'Low' };
   // Spreads generated tasks over every member of a department, like the existing demo seed does,
   // instead of always picking the same first person. Kept for the session, not reset per Case.
   const deptTurn = {};

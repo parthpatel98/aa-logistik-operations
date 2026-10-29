@@ -8,7 +8,7 @@
   const CATS = current => MASTER_CATEGORIES.map(x => x[0]).filter(n => n === current || AA_ADMIN.isActive('categories', n));
   const CASE_TYPES = current => MASTER_CASE_CLASSES.map(x => x[0]).filter(n => n === current || AA_ADMIN.isActive('caseTypes', n));
   const DEPTS = () => ALL_DEPTS.filter(d => d !== '—');
-  const PRIS = ['High', 'Normal', 'Low'];
+  const PRIS = ['Urgent', 'High', 'Medium', 'Low'];
 
   const unitOf = u => { u = u.toLowerCase(); return u.startsWith('m') ? 'minutes' : u.startsWith('h') ? 'hours' : 'days'; };
   function parseDue(s) {

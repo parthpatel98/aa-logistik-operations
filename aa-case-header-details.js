@@ -4,7 +4,7 @@
 (function () {
   const tag = (value, colors) => `<span style="display:inline-flex;align-items:center;padding:3px 9px;border-radius:999px;font-size:12px;font-weight:700;font-family:Inter,"Segoe UI",Arial,sans-serif;${colors}">${editorText(value)}</span>`;
   const STATUS_COLORS = 'background:#e9f8ef;color:#188756';
-  const PRIORITY_COLORS = 'background:#e6f0fb;color:#0871c7';
+  const PRIORITY_COLORS = { Urgent: 'background:#c51f2d;color:#fff', High: 'background:#fde8d3;color:#a1510a', Medium: 'background:#e6f0fb;color:#0871c7', Low: 'background:#e7f4ec;color:#25774a' };
 
   const caseViewBase = caseView;
   caseView = function () {
@@ -26,7 +26,7 @@
       ['Category', editorText(c.classification || '—')],
       ['Case Type', editorText(c.caseClass || '—')],
       ['Status', tag(c.status, STATUS_COLORS)],
-      ['Priority', tag(c.priority, PRIORITY_COLORS)],
+      ['Priority', tag(c.priority, PRIORITY_COLORS[c.priority] || PRIORITY_COLORS.Medium)],
       ['Opter Order', !isTransportCase(c) ? '' : order ?`<span style="font-size:13px;color:#14233a;font-weight:650">${editorText(order.id)}</span>` : '<span style="color:var(--muted);font-weight:500">Not created</span>'],
     ].filter(([, value]) => value);
 

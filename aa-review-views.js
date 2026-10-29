@@ -17,8 +17,18 @@
     return S.reviewerFilters['Awaiting Review'];
   };
   const currentView = () => awaitingState().view || 'All';
-  const optionsHtml = () => ['All', ...Object.keys(VIEWS)]
-    .map(k => `<option value="${k}" ${currentView() === k ? 'selected' : ''}>${k === 'All' ? 'All requests' : `${k} (${VIEWS[k]().length})`}</option>`).join('');
+  // The same dropdown box as the other filters. One view can be chosen, picking it again clears it.
+  const viewPicker = () => {
+    const view = currentView();
+    const body = Object.keys(VIEWS).map(k => rvfRow(`${k} (${VIEWS[k]().length})`, view === k, `S.rvfOpen=null;setReviewerFilter('view','${view === k ? 'All' : k}')`, true)).join('');
+    return rvfTrigger('view', 'Filtered view', view, view !== 'All', body, 240);
+  };
+  const clearKeyBase = rvfClearKey;
+  rvfClearKey = function (key) {
+    if (key !== 'view') return clearKeyBase(key);
+    awaitingState().view = 'All';
+    render();
+  };
 
   // Adds the "Filtered view" field to the Filters dialog, its chip next to the other applied filters, and the count on the Filters button.
   function withFilteredView(html) {
@@ -30,7 +40,9 @@
       const row = customer && customer.parentElement;
       if (row) {
         const field = row.cloneNode(false);
-        field.innerHTML = `<label>Filtered view</label><select aria-label="Filtered view" onchange="setReviewerFilter('view',this.value)" style="width:100%">${optionsHtml()}</select>`;
+        const label = customer.cloneNode(false);
+        label.textContent = 'Filtered view';
+        field.innerHTML = `${label.outerHTML}${viewPicker()}`;
         row.parentElement.insertBefore(field, row);
       }
     }

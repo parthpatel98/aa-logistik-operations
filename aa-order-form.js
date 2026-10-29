@@ -352,6 +352,42 @@
   };
 
   // ---- rendering -----------------------------------------------------------------------------------------------
+  // A value typed or chosen by hand is not an AI extraction, so its AI confidence badge becomes "Manual". Fields are
+  // remembered per Case by card title and label. A goods row is flagged on the row itself (position 7), so the flag follows
+  // the row when other rows are removed. Rows added with + Add Item start out manual.
+  const MANUAL_BADGE = '<span class="ai-field-confidence is-manual" title="Entered manually" aria-label="Entered manually">Manual</span>';
+  const manualFields = caseId => ((S.orderManual = S.orderManual || {})[caseId] = S.orderManual[caseId] || {});
+  const cardTitleOf = el => ((el.closest('.order-card') || document.createElement('div')).querySelector('h3')?.textContent || '').replace(/^\d+\.\s*/, '').trim();
+  document.addEventListener('change', event => {
+    const el = event.target;
+    if (!el.closest || !el.closest('.order-card') || S.page !== 'case') return;
+    const c = typeof selectedCaseData === 'function' ? selectedCaseData() : null;
+    if (!c) return;
+    const goodsRow = el.closest('.compact-order-table tbody tr');
+    if (goodsRow) {
+      const row = goodsRowsFor(c)[goodsRow.rowIndex - 1];
+      if (row) row[7] = true;
+      return;
+    }
+    const line = el.closest('.order-line');
+    if (line) manualFields(c.id)[cardTitleOf(el) + '|' + (line.querySelector(':scope > span')?.textContent.trim() || '')] = true;
+  }, true);
+  const markManualBadges = (grid, c) => {
+    const manual = manualFields(c.id), goodsRows = goodsRowsFor(c);
+    grid.querySelectorAll('.order-card').forEach(card => {
+      const title = cardTitleOf(card.querySelector('h3') || card);
+      card.querySelectorAll('.order-line').forEach(line => {
+        const badge = line.querySelector('.ai-field-confidence:not(.is-manual)');
+        if (badge && manual[title + '|' + (line.querySelector(':scope > span')?.textContent.trim() || '')]) badge.outerHTML = MANUAL_BADGE;
+      });
+      const msgBadge = card.querySelector('.order-card-head .ai-field-confidence:not(.is-manual)');
+      if (msgBadge && manual[title + '|']) msgBadge.outerHTML = MANUAL_BADGE;
+    });
+    grid.querySelectorAll('.compact-order-table tbody tr').forEach((tr, i) => {
+      const badge = tr.querySelector('.ai-field-confidence:not(.is-manual)');
+      if (badge && goodsRows[i] && goodsRows[i][7]) badge.outerHTML = MANUAL_BADGE;
+    });
+  };
   const rowHtml = (label, control, opts = {}) => `<div class="order-line${opts.wide ? ' order-wide' : ''}"><span>${label}</span><div class="order-inline-control">${control}</div>${confidenceBadge(opts.score || 88)}</div>`;
   const input = (value, attrs) => `<input class="order-inline-input" type="text" value="${editorText(value)}" ${attrs}>`;
   const toNode = html => { const t = document.createElement('template'); t.innerHTML = html.trim(); return t.content.firstElementChild; };
@@ -489,6 +525,13 @@
     document.addEventListener('keydown', e => { if (e.key === 'Escape') { document.querySelectorAll('.order-upd.open').forEach(w => w.classList.remove('open')); const ae = document.activeElement; if (ae && ae.closest && ae.closest('.order-upd')) ae.blur(); } });
   }
 
+  const addGoodsBase = addGoodsRow;
+  addGoodsRow = function (caseId) {
+    addGoodsBase(caseId);
+    const rows = goodsRowsFor(CASE_DETAILS[caseId]);
+    rows[rows.length - 1][7] = true;
+    render();
+  };
   const removeGoodsBase = removeGoodsRow;
   removeGoodsRow = function (caseId, i) {
     const c = CASE_DETAILS[caseId], before = goodsRowsFor(selectedCaseData()).length;
@@ -588,6 +631,7 @@
       grid.replaceChildren(...ordered);
       applyOrderOverrides(grid, c);
       decoratePending(grid, c);
+      markManualBadges(grid, c);
       // A field with no value is empty, not a dash.
       grid.querySelectorAll('input.order-inline-input:not([type=hidden]), textarea.order-inline-input').forEach(el => { if (/^[—–-]$/.test(el.value.trim())) { el.value = ''; el.setAttribute('value', ''); el.textContent = ''; } });
       grid.querySelectorAll('.order-card > .order-card-head > h3:not(.order-msg-title)').forEach((h, i) => { h.textContent = h.textContent.replace(/^\d+\.\s*/, `${i + 1}. `); });

@@ -9,7 +9,7 @@
    aa-templates.js. */
 (function () {
   const DEPTS = () => ALL_DEPTS.filter(d => d !== '—');
-  const PRIS = ['High', 'Normal', 'Low'];
+  const PRIS = ['Urgent', 'High', 'Medium', 'Low'];
 
   // Same relative-due model as the Task Template editor (AA_DUE in aa-templates.js).
   const parseDueText = s => { const d = AA_DUE.parse(s); return { base: d.base, amount: d.amount, unit: d.unit }; };
@@ -34,7 +34,7 @@
   AA_ADMIN.forms.taskLibrary = {
     noun: 'Task',
     toggleable: true,
-    blank: () => ({ name: '', dept: DEPTS()[0], priority: 'Normal', base: 'created', amount: 1, unit: 'hours' }),
+    blank: () => ({ name: '', dept: DEPTS()[0], priority: 'Medium', base: 'created', amount: 1, unit: 'hours' }),
     load: id => { const t = libById(id); return t && { ...t }; },
     fields: v => [
       { key: 'name', label: 'Task Name' },
@@ -77,7 +77,7 @@
       `<strong>${editorText(t.name)}</strong>`,
       editorText(t.dept),
       editorText(dueText(t)),
-      masterPill(t.priority, t.priority === 'High' ? 'amber' : ''),
+      masterPill(t.priority, /^(Urgent|High)$/.test(t.priority) ? 'amber' : ''),
       AA_ADMIN.statusPill(AA_ADMIN.isActive('taskLibrary', t.id)),
       AA_ADMIN.actions('taskLibrary', t.id, { remove: true }),
     ]);

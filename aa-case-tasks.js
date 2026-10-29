@@ -3,7 +3,7 @@
    Case is not added twice. Loaded last, after the Case and Task data. */
 (function () {
   const MIN_TASKS = 3, MAX_TASKS = 7;
-  const PRIORITY = { High: 'High', Normal: 'Medium', Low: 'Low' };
+  const PRIORITY = { Urgent: 'Urgent', High: 'High', Normal: 'Medium', Medium: 'Medium', Low: 'Low' };
   const DEPARTMENT_CLASSIFICATION = { Transport: 'Transport booking', Warehouse: 'Warehouse storage', Packing: 'Packing preparation' };
   const template = id => MASTER_TASK_TEMPLATES.find(t => t.id === id);
 
