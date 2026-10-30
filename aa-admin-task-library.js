@@ -20,10 +20,10 @@
     if (window.MASTER_TASK_LIBRARY) return;
     const seen = new Set(), rows = [];
     MASTER_TASK_TEMPLATES.forEach(t => t.tasks.forEach(row => {
-      const [title, dept, due, owner, pri] = row, key = title + '|' + dept;
+      const [title, dept, due, owner, pri, description = ''] = row, key = title + '|' + dept;
       if (seen.has(key)) return;
       seen.add(key);
-      rows.push({ id: 'lib-' + rows.length, name: title, dept, owner, priority: pri, ...parseDueText(due) });
+      rows.push({ id: 'lib-' + rows.length, name: title, description, dept, owner, priority: pri, ...parseDueText(due), base: 'created' });
     }));
     window.MASTER_TASK_LIBRARY = rows;
   }
@@ -31,19 +31,22 @@
 
   const libById = id => MASTER_TASK_LIBRARY.find(x => x.id === id);
 
+  // The due time always counts from when the Task is created, so the form has no 'after' option.
+  const DUE_TIP = 'Counted from the moment the task is created, so the due date and time are worked out at that point.';
+  const DUE_LABEL = `<span style="display:inline-flex;align-items:center;gap:5px">Due<span role="img" aria-label="${DUE_TIP}" title="${DUE_TIP}" style="display:inline-flex;align-items:center;justify-content:center;width:12px;height:12px;border:1px solid var(--muted);border-radius:50%;color:var(--muted);font-size:8px;font-style:italic;font-weight:700;cursor:help">i</span></span>`;
+
   AA_ADMIN.forms.taskLibrary = {
     noun: 'Task',
     toggleable: true,
-    blank: () => ({ name: '', dept: DEPTS()[0], priority: 'Medium', base: 'created', amount: 1, unit: 'hours' }),
+    blank: () => ({ name: '', description: '', dept: DEPTS()[0], priority: 'Medium', base: 'created', amount: 1, unit: 'hours' }),
     load: id => { const t = libById(id); return t && { ...t }; },
     fields: v => [
       { key: 'name', label: 'Task Name' },
+      { key: 'description', label: 'Description', type: 'textarea', rows: 3, aria: 'Task description' },
       { key: 'dept', label: 'Department', type: 'select', options: AA_ADMIN.options(DEPTS(), v.dept) },
-      { label: 'Due', type: 'inline', parts: [
+      { label: DUE_LABEL, type: 'inline', parts: [
         { key: 'amount', type: 'number', aria: 'Due amount', width: '80px' },
         { key: 'unit', type: 'select', aria: 'Due unit', options: AA_DUE.UNITS, width: '120px' },
-        'after',
-        { key: 'base', type: 'select', aria: 'Due from', options: AA_DUE.BASES },
       ] },
       { key: 'priority', label: 'Priority', type: 'select', options: AA_ADMIN.options(PRIS, v.priority) },
     ],
@@ -54,7 +57,7 @@
       return '';
     },
     save: (v, id) => {
-      const row = { name: v.name.trim(), dept: v.dept, priority: v.priority, base: v.base, amount: Number(v.amount), unit: v.unit };
+      const row = { name: v.name.trim(), description: (v.description || '').trim(), dept: v.dept, priority: v.priority, base: 'created', amount: Number(v.amount), unit: v.unit };
       if (id) Object.assign(libById(id), row);
       else MASTER_TASK_LIBRARY.push({ id: 'lib-' + Date.now(), owner: 'Default', ...row });
     },

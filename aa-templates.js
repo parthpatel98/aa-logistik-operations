@@ -26,7 +26,8 @@
   }
   // A template holds a list of Departments. Older templates stored one Department, which becomes a one-item list.
   MASTER_TASK_TEMPLATES.forEach(t => { t.departments = t.departments || (t.department ? [t.department] : []); delete t.department; });
-  MASTER_TASK_TEMPLATES.forEach(t => t.tasks.forEach(x => { const d = parseDue(x[2]); x[2] = dueText(d) + d.cond; }));
+  // Every Task's due time counts from its creation, so seeded wording that counted from start is converted too.
+  MASTER_TASK_TEMPLATES.forEach(t => t.tasks.forEach(x => { const d = parseDue(x[2]); x[2] = dueText({ ...d, base: 'created' }) + d.cond; }));
   window.AA_DUE = { BASES, UNITS, parse: parseDue, text: dueText };
   function sel(pairs, val, handler, style, aria) {
     return `<select ${aria ? `aria-label="${aria}"` : ''} onchange="${handler}" style="${style || IN}">${pairs.map(([v, l]) => `<option value="${editorText(v)}" ${v === val ? 'selected' : ''}>${editorText(l)}</option>`).join('')}</select>`;
@@ -37,7 +38,7 @@
   window.tplNew = function () { S.tplForm = { mode: 'create', id: null, name: '', category: '', caseType: '', departments: [], tasks: [] }; render(); };
   window.tplEdit = function () {
     const t = selectedTpl();
-    S.tplForm = { mode: 'edit', id: t.id, name: t.name, category: t.category || '', caseType: t.caseType || '', departments: [...t.departments], tasks: t.tasks.map(x => ({ title: x[0], dept: x[1], owner: x[3], pri: x[4], ...parseDue(x[2]) })) };
+    S.tplForm = { mode: 'edit', id: t.id, name: t.name, category: t.category || '', caseType: t.caseType || '', departments: [...t.departments], tasks: t.tasks.map(x => ({ title: x[0], dept: x[1], owner: x[3], pri: x[4], description: x[5] || '', ...parseDue(x[2]) })) };
     render();
   };
   window.tplClose = function () { S.tplForm = null; render(); };
@@ -72,7 +73,7 @@
     const t = (window.MASTER_TASK_LIBRARY || []).find(x => x.id === id);
     if (!t) return;
     if (S.tplForm.tasks.some(x => x.title === t.name)) { toast('Already added to this template'); return; }
-    S.tplForm.tasks.push({ title: t.name, dept: t.dept, owner: t.owner, pri: t.priority, base: t.base, amount: t.amount, unit: t.unit, cond: '' });
+    S.tplForm.tasks.push({ title: t.name, description: t.description || '', dept: t.dept, owner: t.owner, pri: t.priority, base: t.base, amount: t.amount, unit: t.unit, cond: '' });
     S.tplLibQuery = '';
     toast('Task added from library');
     render();
@@ -85,7 +86,7 @@
     const obj = { name: f.name, category: f.category, caseType: f.caseType, departments: [...f.departments],
       scope: `${f.category} · ${f.caseType} · ${f.departments.join(', ')}`,
       // Due times always count from task creation, so the saved text never uses the removed After option.
-      tasks: f.tasks.map(t => [t.title, t.dept, dueText({ ...t, base: 'created' }) + (t.cond || ''), t.owner, t.pri]) };
+      tasks: f.tasks.map(t => [t.title, t.dept, dueText({ ...t, base: 'created' }) + (t.cond || ''), t.owner, t.pri, (t.description || '').trim()]) };
     if (f.mode === 'edit') Object.assign(MASTER_TASK_TEMPLATES.find(x => x.id === f.id), obj);
     else { const id = 'tpl-' + Date.now(); MASTER_TASK_TEMPLATES.push({ id, ...obj }); S.masterTemplate = id; }
     S.tplForm = null; toast('Template saved'); render();
@@ -169,6 +170,7 @@
         <label style="${label};flex:1 1 260px;min-width:0">Task name<input value="${editorText(t.title)}" onchange="tplTask(${i},'title',this.value)" style="${IN}"></label>
         <label style="${label};flex:0 0 150px">Priority${sel(simple(PRIS), t.pri, `tplTask(${i},'pri',this.value)`)}</label>
       </div>
+      <label style="${label}">Description<textarea rows="2" aria-label="Task description" onchange="tplTask(${i},'description',this.value)" style="${IN};height:auto;padding:8px 10px;resize:vertical;font-family:inherit">${editorText(t.description || '')}</textarea></label>
       <div style="${taskLine}">
         <label style="${label}"><span style="display:inline-flex;align-items:center;gap:5px">Due${dueInfo}</span><span style="display:flex;gap:8px"><input type="number" min="0" aria-label="Due amount" value="${t.amount}" onchange="tplTask(${i},'amount',this.value)" style="${IN};width:90px">${sel(UNITS, t.unit, `tplTask(${i},'unit',this.value)`, IN + ';width:auto', 'Due unit')}</span></label>
       </div>
